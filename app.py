@@ -59,41 +59,45 @@ def get_prompt_template():
 def local_css():
     st.markdown("""
         <style>
-            /* 1. Sembunyikan Header secara total (Manage App, Profil, dsb) */
+            /* 1. Sembunyikan Header & Manage App (Desktop & Mobile) */
             header, [data-testid="stHeader"] {
                 display: none !important;
             }
             
-            /* 2. Sembunyikan Footer Utama */
-            footer {
+            /* 2. Sembunyikan Footer Utama & "Created with Streamlit" */
+            footer, [data-testid="stFooter"] {
                 display: none !important;
             }
 
-            /* 3. Sembunyikan Menu Hamburger */
+            /* 3. Sembunyikan Status Widget & Elemen Dekorasi (Garis pelangi & tulisan di bawah) */
+            [data-testid="stStatusWidget"], #stDecoration {
+                display: none !important;
+            }
+
+            /* 4. Target Khusus untuk Mobile (Tautan di bagian bawah halaman) */
+            div.stAppViewBlockContainer > div:last-child {
+                display: none !important;
+            }
+            
+            /* 5. Mencegah scoll ke bawah yang menampilkan area kosong */
+            .stApp {
+                overflow: hidden;
+            }
+
+            /* 6. Hilangkan Menu Hamburger */
             #MainMenu {
                 display: none !important;
             }
 
-            /* 4. MENGHILANGKAN "Created with Streamlit" DI MOBILE */
-            /* Ini menargetkan container dekorasi yang muncul di mobile */
-            .stApp [data-testid="stDecoration"] {
-                display: none !important;
-            }
-            
-            /* Menargetkan link dan teks status di bagian bawah */
-            [data-testid="stStatusWidget"] {
-                display: none !important;
-            }
-
-            /* 5. Optimasi Spasi (Agar tidak ada ruang kosong di atas/bawah) */
+            /* 7. Optimasi Ruang Layar */
             .block-container {
                 padding-top: 1rem !important;
                 padding-bottom: 0rem !important;
+                max-width: 100% !important;
             }
 
-            /* CSS Tambahan untuk Chat */
-            .stChatMessage { border-radius: 10px; margin-bottom: 10px; }
-            .stButton>button { width: 100%; border-radius: 5px; }
+            /* Styling tambahan untuk Chat */
+            .stChatMessage { border-radius: 10px; }
         </style>
     """, unsafe_allow_html=True)
 
