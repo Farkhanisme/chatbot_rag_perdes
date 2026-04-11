@@ -59,24 +59,30 @@ def get_prompt_template():
 def local_css():
     st.markdown("""
         <style>
-            /* 1. Menyembunyikan Header (Tombol Deploy, GitHub, dsb) */
-            header {visibility: hidden;}
+            /* Menyembunyikan Header dan tombol Manage App */
+            header, [data-testid="stHeader"] {
+                display: none !important;
+            }
             
-            /* 2. Menyembunyikan Footer (Made with Streamlit) */
-            footer {visibility: hidden;}
+            /* Menyembunyikan Footer (Hosted with Streamlit) */
+            footer {
+                display: none !important;
+            }
 
-            /* 3. Menyembunyikan Menu Hamburger (Tiga titik di kanan atas) */
-            #MainMenu {visibility: hidden;}
+            /* Menyembunyikan Menu Hamburger */
+            #MainMenu {
+                display: none !important;
+            }
 
-            /* 4. Styling Chat Message agar lebih rapi */
-            .stChatMessage { border-radius: 10px; margin-bottom: 10px; }
-            
-            /* 5. Styling tombol di Sidebar */
-            .stButton>button { width: 100%; border-radius: 5px; }
-
-            /* 6. Menghilangkan padding berlebih di bagian atas setelah header hilang */
+            /* Menghilangkan padding atas agar tidak kosong */
             .block-container {
-                padding-top: 2rem;
+                padding-top: 0rem;
+                padding-bottom: 0rem;
+            }
+
+            /* Menyembunyikan elemen 'Streamlit' di pojok kanan bawah pada mobile */
+            #stDecoration {
+                display: none !important;
             }
         </style>
     """, unsafe_allow_html=True)
