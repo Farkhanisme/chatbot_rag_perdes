@@ -59,31 +59,41 @@ def get_prompt_template():
 def local_css():
     st.markdown("""
         <style>
-            /* Menyembunyikan Header dan tombol Manage App */
+            /* 1. Sembunyikan Header secara total (Manage App, Profil, dsb) */
             header, [data-testid="stHeader"] {
                 display: none !important;
             }
             
-            /* Menyembunyikan Footer (Hosted with Streamlit) */
+            /* 2. Sembunyikan Footer Utama */
             footer {
                 display: none !important;
             }
 
-            /* Menyembunyikan Menu Hamburger */
+            /* 3. Sembunyikan Menu Hamburger */
             #MainMenu {
                 display: none !important;
             }
 
-            /* Menghilangkan padding atas agar tidak kosong */
-            .block-container {
-                padding-top: 0rem;
-                padding-bottom: 0rem;
-            }
-
-            /* Menyembunyikan elemen 'Streamlit' di pojok kanan bawah pada mobile */
-            #stDecoration {
+            /* 4. MENGHILANGKAN "Created with Streamlit" DI MOBILE */
+            /* Ini menargetkan container dekorasi yang muncul di mobile */
+            .stApp [data-testid="stDecoration"] {
                 display: none !important;
             }
+            
+            /* Menargetkan link dan teks status di bagian bawah */
+            [data-testid="stStatusWidget"] {
+                display: none !important;
+            }
+
+            /* 5. Optimasi Spasi (Agar tidak ada ruang kosong di atas/bawah) */
+            .block-container {
+                padding-top: 1rem !important;
+                padding-bottom: 0rem !important;
+            }
+
+            /* CSS Tambahan untuk Chat */
+            .stChatMessage { border-radius: 10px; margin-bottom: 10px; }
+            .stButton>button { width: 100%; border-radius: 5px; }
         </style>
     """, unsafe_allow_html=True)
 
