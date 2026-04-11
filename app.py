@@ -73,10 +73,19 @@ def main():
     st.header("🤖 Chatbot Peraturan Desa Tieng")
     st.subheader("Informasi Pengelolaan Sampah & Bank Sampah")
 
-    api_key = st.secrets["GOOGLE_API_KEY"] if "GOOGLE_API_KEY" in st.secrets else os.getenv("GOOGLE_API_KEY")
+    # Cara yang lebih aman untuk cek API Key di lokal dan cloud
+    api_key = None
+    try:
+        if "GOOGLE_API_KEY" in st.secrets:
+            api_key = st.secrets["GOOGLE_API_KEY"]
+    except:
+        pass
+
     if not api_key:
-        st.error("API Key belum disetel di .env")
-        return
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            st.error("API Key belum disetel di .env")
+            return
 
     # Inisialisasi Resource (Caching Aktif)
     embeddings, vector_db = get_resources()
