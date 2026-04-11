@@ -1,0 +1,22 @@
+# Library Utama GUI
+streamlit
+
+# Inti LangChain (Versi Stabil & Kompatibel)
+langchain==0.3.0
+langchain-community==0.3.0
+langchain-core==0.3.10
+langsmith==0.1.147
+langchain-text-splitters==0.3.0
+
+# Integrasi Google Gemini (Versi yang tidak merusak Core)
+langchain-google-genai==2.0.1
+google-ai-generativelanguage
+
+langchain-huggingface
+sentence-transformers
+
+# Pengolahan Data & PDF
+PyPDF2
+pandas
+faiss-cpu
+python-dotenv

@@ -1,0 +1,14 @@
+# Lingkungan Virtual
+venv/
+
+# Folder database vector (FAISS)
+faiss/
+
+# File konfigurasi sensitif (API Key, dll)
+.env
+
+# Cache Python
+__pycache__/
+*.py[cod]
+
+cek_model.py
