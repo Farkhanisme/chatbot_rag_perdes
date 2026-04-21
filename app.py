@@ -154,12 +154,13 @@ def main():
             try:
                 # 1. Retrieval
                 docs = vector_db.similarity_search(prompt, k=7)
-                context = "\n\n".join([doc.page_content for doc in docs])
+                context_list = "\n\n".join([doc.page_content for doc in docs])
+                context_string = "\n\n".join(context_list)
                 
                 # Gunakan penamaan model yang lebih spesifik untuk jalur v1
                 # Jika gemini-1.5-flash tetap 404, gunakan gemini-1.5-flash-001
                 model = ChatGoogleGenerativeAI(
-                    model="gemini-2.0-flash", 
+                    model="gemini-2.5-flash", 
                     temperature=0.1, 
                     google_api_key=api_key
                 )
@@ -168,9 +169,15 @@ def main():
                 
                 # Proses Streaming
                 with st.spinner("Menghubungi server..."):
-                    for chunk in chain.stream({"context": context, "question": prompt}):
+                    for chunk in chain.stream({"context": context_string, "question": prompt}):
                         full_response += chunk
                         message_placeholder.markdown(full_response + "▌")
+
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": full_response,
+                    "context_retrieved": context_list # Tambahkan field baru ini
+                })
                         
             except Exception as e:
                 # Jika masih error 404, gunakan fallback ke gemini-pro yang hampir pasti tersedia di semua versi
@@ -179,7 +186,7 @@ def main():
                 chain = get_prompt_template() | model_fallback | StrOutputParser()
                 
                 # Jalankan ulang invoke (atau stream) untuk fallback
-                full_response = chain.invoke({"context": context, "question": prompt})
+                full_response = chain.invoke({"context": context_string, "question": prompt})
                 message_placeholder.markdown(full_response)
 
     # Sidebar Tools
@@ -190,9 +197,23 @@ def main():
             st.rerun()
         
         if st.session_state.messages:
+            history_data = []
+            for msg in st.session_state.messages:
+                row = {
+                    "Role": msg["role"],
+                    "Content": msg["content"],
+                    "Context_FAISS": msg.get("context_retrieved", "") # Ambil context jika ada
+                }
+                history_data.append(row)
+            
             df = pd.DataFrame(st.session_state.messages)
             csv = df.to_csv(index=False)
-            st.download_button("Download Chat (CSV)", csv, "history_chat.csv", "text/csv")
+            st.download_button(
+                label="Download Dataset Evaluasi (CSV)",
+                data=csv,
+                file_name=f"evaluasi_chat_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                mime="text/csv"
+            )
 
 if __name__ == "__main__":
     main()
