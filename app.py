@@ -154,8 +154,8 @@ def main():
             try:
                 # 1. Retrieval
                 docs = vector_db.similarity_search(prompt, k=7)
-                context_list = "\n\n".join([doc.page_content for doc in docs])
-                context_string = "\n\n".join(context_list)
+                # context_list = "\n\n".join([doc.page_content for doc in docs])
+                context_string = "\n\n".join([doc.page_content for doc in docs])
                 
                 # Gunakan penamaan model yang lebih spesifik untuk jalur v1
                 # Jika gemini-1.5-flash tetap 404, gunakan gemini-1.5-flash-001
@@ -176,7 +176,7 @@ def main():
                 st.session_state.messages.append({
                     "role": "assistant", 
                     "content": full_response,
-                    "context_retrieved": context_list # Tambahkan field baru ini
+                    "context_retrieved": context_string # Tambahkan field baru ini
                 })
                         
             except Exception as e:
@@ -188,6 +188,12 @@ def main():
                 # Jalankan ulang invoke (atau stream) untuk fallback
                 full_response = chain.invoke({"context": context_string, "question": prompt})
                 message_placeholder.markdown(full_response)
+
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": full_response,
+                    "context_retrieved": context_string
+                })
 
     # Sidebar Tools
     with st.sidebar:
