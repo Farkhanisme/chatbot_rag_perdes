@@ -160,7 +160,7 @@ def main():
                 # Gunakan penamaan model yang lebih spesifik untuk jalur v1
                 # Jika gemini-1.5-flash tetap 404, gunakan gemini-1.5-flash-001
                 model = ChatGoogleGenerativeAI(
-                    model="gemini-2.5-flash", 
+                    model="gemini-2.5-flash-lite", 
                     temperature=0.1, 
                     google_api_key=api_key
                 )
