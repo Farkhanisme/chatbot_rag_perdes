@@ -59,51 +59,35 @@ def get_prompt_template():
 def local_css():
     st.markdown("""
         <style>
-            /* 1. Sembunyikan Header & Manage App (Desktop & Mobile) */
-            header, [data-testid="stHeader"] {
-                display: none !important;
+            /* 1. Sembunyikan garis dekorasi pelangi di atas, tapi jangan sembunyikan seluruh header */
+            [data-testid="stHeader"] {
+                background-color: rgba(0,0,0,0);
+                color: rgba(0,0,0,0);
             }
             
-            /* 2. Sembunyikan Footer Utama & "Created with Streamlit" */
-            footer, [data-testid="stFooter"] {
-                display: none !important;
-            }
+            /* Sembunyikan tombol menu (tiga titik) di kanan atas jika ingin, 
+               tapi biarkan tombol sidebar di kiri tetap ada */
+            #MainMenu {visibility: hidden;}
 
-            /* 3. Sembunyikan Status Widget & Elemen Dekorasi (Garis pelangi & tulisan di bawah) */
-            [data-testid="stStatusWidget"], #stDecoration {
-                display: none !important;
-            }
+            /* 2. Sembunyikan Footer */
+            footer {visibility: hidden;}
+            [data-testid="stFooter"] {display: none !important;}
 
-            /* 4. Target Khusus untuk Mobile (Tautan di bagian bawah halaman) */
-            div.stAppViewBlockContainer > div:last-child {
-                display: none !important;
-            }
-            
-            /* 5. Mencegah scoll ke bawah yang menampilkan area kosong */
-            .stApp {
-                overflow: hidden;
-            }
-
-            /* 6. Hilangkan Menu Hamburger */
-            #MainMenu {
-                display: none !important;
-            }
-
-            /* 7. Optimasi Ruang Layar */
+            /* 3. Optimasi Ruang Layar */
             .block-container {
-                padding-top: 1rem !important;
+                padding-top: 2rem !important; /* Beri sedikit ruang agar tombol sidebar tidak menumpuk */
                 padding-bottom: 0rem !important;
                 max-width: 100% !important;
             }
 
-            /* Styling tambahan untuk Chat */
+            /* Styling Chat agar lebih manis */
             .stChatMessage { border-radius: 10px; }
         </style>
     """, unsafe_allow_html=True)
 
 # --- 4. MAIN APP ---
 def main():
-    st.set_page_config(page_title="Chatbot Desa Tieng", page_icon="🤖")
+    st.set_page_config(page_title="Chatbot Desa Tieng", page_icon="🤖", initial_sidebar_state="expanded")
     local_css()
     
     st.header("🤖 Chatbot Peraturan Desa Tieng")
