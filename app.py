@@ -181,7 +181,7 @@ def main():
                         
             except Exception as e:
                 # Jika masih error 404, gunakan fallback ke gemini-pro yang hampir pasti tersedia di semua versi
-                st.warning("Menggunakan model cadangan karena kendala koneksi API.")
+                # st.warning("Menggunakan model cadangan karena kendala koneksi API.")
                 model_fallback = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, google_api_key=api_key)
                 chain = get_prompt_template() | model_fallback | StrOutputParser()
                 
