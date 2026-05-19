@@ -1,34 +1,60 @@
 import streamlit as st
 import os
+import re
 import pandas as pd
-import base64
 from datetime import datetime
-import asyncio
 
-# --- LANGCHAIN MODERN IMPORTS ---
+# --- LANGCHAIN IMPORTS ---
 from langchain_huggingface import HuggingFaceEmbeddings 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter 
 from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import HumanMessage, AIMessage
 
 from dotenv import load_dotenv
 load_dotenv()
 
-# --- 1. OPTIMASI CACHE & RESOURCE ---
+# --- 1. OPTIMASI DB DENGAN CONTEXTUAL BAB INJECTION (PERBAIKAN REGEX) ---
 @st.cache_resource
 def get_resources():
-    """Memuat model embedding dan database sekali saja ke memori"""
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    """Memuat model embedding dan menyisipkan keterangan BAB ke setiap pasal yang ada di bawahnya"""
+    # embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-m3")
     
     file_path = "perdes_sampah.txt"
     if not os.path.exists("faiss_index"):
         if os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as f:
                 raw_text = f.read()
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=300)
-            chunks = text_splitter.split_text(raw_text)
+            
+            # Strategi: Pecah teks menggunakan regex berbasis kemunculan kata "Pasal <angka>"
+            # Positif lookahead (?=...) digunakan agar kata "Pasal" tidak ikut terhapus saat di-split
+            pasal_splits = re.split(r'\n(?=Pasal\s+\d+)', raw_text, flags=re.IGNORECASE)
+            
+            chunks = []
+            current_bab = "BAB I KETENTUAN UMUM" # Fallback awal dokumen [cite: 1]
+            
+            for part in pasal_splits:
+                part_cleaned = part.strip()
+                if not part_cleaned:
+                    continue
+                
+                # Lacak status BAB saat ini. Jika di dalam potongan teks ini terdapat deklarasi BAB baru,
+                # kita perbarui variabel current_bab untuk pasal-pasal berikutnya.
+                bab_match = re.search(r'(BAB\s+(?:[I|V|X|L|C]+|\d+)[^\n]*)', part_cleaned, re.IGNORECASE)
+                if bab_match:
+                    current_bab = bab_match.group(1).strip()
+                
+                # Masukkan text ke dalam chunk. Kita injeksikan info BAB di bagian atas
+                # agar sewaktu similarity search, LLM selalu tahu pasal ini merujuk ke BAB mana.
+                text_wrapper = f"[{current_bab}]\n{part_cleaned}"
+                chunks.append(text_wrapper)
+            
+            # Filter chunk yang terlalu pendek atau kosong
+            chunks = [c.strip() for c in chunks if len(c.strip()) > 10]
+            
+            # Simpan ke database vektor FAISS lokal
             vector_store = FAISS.from_texts(chunks, embedding=embeddings)
             vector_store.save_local("faiss_index")
         else:
@@ -37,55 +63,43 @@ def get_resources():
     vector_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
     return embeddings, vector_db
 
-# --- 2. KONFIGURASI PROMPT ---
-def get_prompt_template():
-    template = """Anda adalah asisten virtual resmi Desa Tieng. Jawablah pertanyaan warga dengan sopan dan mudah dimengerti HANYA berdasarkan dokumen di bawah ini.
-    
-    KONTEKS:
-    {context}
-    
-    ATURAN:
-    1. Gunakan bahasa yang merakyat namun tetap sopan.
-    2. Jika ada di dokumen, sebutkan Pasal/Bab-nya.
-    3. Jika tidak ada secara spesifik (misal: sungai), gunakan logika 'tempat terlarang' dari Pasal 12 atau 38 untuk menghimbau warga.
-    4. Nama pejabat ada di bagian akhir (Berita Acara).
-    5. Jika benar-benar tidak ada, katakan maaf dengan jujur.
+# --- 2. TEMPLATE PROMPT DENGAN MESSAGES PLACEHOLDER (MEMORI) ---
+def get_chat_prompt_template():
+    return ChatPromptTemplate.from_messages([
+        ("system", """Anda adalah asisten virtual resmi Desa Tieng. Jawablah pertanyaan warga mengenai regulasi sampah dengan sopan, ringkas, dan ramah.
+        
+        Gunakan KONTEKS berikut sebagai acuan utama Anda untuk menjawab. Jangan bertele-tele agar hemat token.
+        
+        KONTEKS:
+        {context}
+        
+        ATURAN:
+        1. Gunakan bahasa yang merakyat namun tetap sopan.
+        2. Sebutkan nomor Pasal atau Bab jika informasinya tertera pada konteks.
+        3. Jika tidak ada secara spesifik (misal: sungai), gunakan logika 'tempat terlarang' dari Pasal 12 atau 38 untuk menghimbau warga.
+        4. Nama pejabat ada di bagian akhir (pejabat desa).
+        5. Jika jawaban tidak ada di dalam konteks, katakan dengan jujur dan sopan bahwa informasi tersebut belum diatur di Perdes atau tidak ditemukan."""),
+        
+        # Riwayat chat akan disisipkan secara otomatis di sini oleh LangChain
+        MessagesPlaceholder(variable_name="chat_history"),
+        
+        ("human", "{question}")
+    ])
 
-    Pertanyaan: {question}
-    Jawaban:"""
-    return PromptTemplate(template=template, input_variables=["context", "question"])
-
-# --- 3. UI RENDERER (CSS SEDERHANA) ---
+# --- 3. UI CUSTOMIZATION (CSS) ---
 def local_css():
     st.markdown("""
         <style>
-            /* 1. Sembunyikan garis dekorasi pelangi di atas, tapi jangan sembunyikan seluruh header */
-            [data-testid="stHeader"] {
-                background-color: rgba(0,0,0,0);
-                color: rgba(0,0,0,0);
-            }
-            
-            /* Sembunyikan tombol menu (tiga titik) di kanan atas jika ingin, 
-               tapi biarkan tombol sidebar di kiri tetap ada */
+            [data-testid="stHeader"] { background-color: rgba(0,0,0,0); color: rgba(0,0,0,0); }
             #MainMenu {visibility: hidden;}
-
-            /* 2. Sembunyikan Footer */
             footer {visibility: hidden;}
             [data-testid="stFooter"] {display: none !important;}
-
-            /* 3. Optimasi Ruang Layar */
-            .block-container {
-                padding-top: 2rem !important; /* Beri sedikit ruang agar tombol sidebar tidak menumpuk */
-                padding-bottom: 0rem !important;
-                max-width: 100% !important;
-            }
-
-            /* Styling Chat agar lebih manis */
+            .block-container { padding-top: 2rem !important; padding-bottom: 0rem !important; max-width: 100% !important; }
             .stChatMessage { border-radius: 10px; }
         </style>
     """, unsafe_allow_html=True)
 
-# --- 4. MAIN APP ---
+# --- 4. MAIN APPLICATION ---
 def main():
     st.set_page_config(page_title="Chatbot Desa Tieng", page_icon="🤖", initial_sidebar_state="expanded")
     local_css()
@@ -93,115 +107,126 @@ def main():
     st.header("🤖 Chatbot Peraturan Desa Tieng")
     st.subheader("Informasi Pengelolaan Sampah & Bank Sampah")
 
-    # Cara yang lebih aman untuk cek API Key di lokal dan cloud
-    api_key = None
-    try:
-        if "GOOGLE_API_KEY" in st.secrets:
-            api_key = st.secrets["GOOGLE_API_KEY"]
-    except:
-        pass
-
+    api_key = os.getenv("GOOGLE_API_KEY") or (st.secrets.get("GOOGLE_API_KEY") if "GOOGLE_API_KEY" in st.secrets else None)
     if not api_key:
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            st.error("API Key belum disetel di .env")
-            return
-
-    # Inisialisasi Resource (Caching Aktif)
-    embeddings, vector_db = get_resources()
-    
-    if vector_db is None:
-        st.error("File perdes_sampah.txt tidak ditemukan untuk inisialisasi.")
+        st.error("API Key Gemini (GOOGLE_API_KEY) belum dikonfigurasi di file .env atau Secrets!")
         return
 
-    # Inisialisasi Riwayat Chat
+    embeddings, vector_db = get_resources()
+    if vector_db is None:
+        st.error("File 'perdes_sampah.txt' tidak ditemukan. Sediakan file tersebut di root direktori proyek Anda.")
+        return
+
+    # Inisialisasi riwayat pesan di session state Streamlit
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Tampilkan Riwayat Chat (Gaya Streamlit Modern)
+    # Menampilkan percakapan yang sudah terjadi sebelumnya ke layar UI
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Chat Input
-    if prompt := st.chat_input("Tanyakan sesuatu tentang sampah desa..."):
-        # Tambahkan pertanyaan user ke UI
+    # Logika Input Chat Pengguna
+    if prompt := st.chat_input("Tanyakan aturan sampah, sanksi, atau bank sampah..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Proses Jawaban (Streaming)
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             full_response = ""
             
+            # 1. Menyiapkan Konteks dan Riwayat (Sama seperti sebelumnya)
+            docs = vector_db.similarity_search(prompt, k=4)
+            context_string = "\n\n".join([doc.page_content for doc in docs])
+            
+            recent_messages = st.session_state.messages[:-1][-4:] 
+            langchain_history = []
+            for msg in recent_messages:
+                if msg["role"] == "user":
+                    langchain_history.append(HumanMessage(content=msg["content"]))
+                elif msg["role"] == "assistant":
+                    langchain_history.append(AIMessage(content=msg["content"]))
+
+            prompt_template = get_chat_prompt_template()
+
+            # --- MULAI PERCABANGAN / FALLBACK BERJENJANG ---
             try:
-                # 1. Retrieval
-                docs = vector_db.similarity_search(prompt, k=7)
-                # context_list = "\n\n".join([doc.page_content for doc in docs])
-                context_string = "\n\n".join([doc.page_content for doc in docs])
-                
-                # Gunakan penamaan model yang lebih spesifik untuk jalur v1
-                # Jika gemini-1.5-flash tetap 404, gunakan gemini-1.5-flash-001
+                # PILIHAN 1: Gemini 2.5 Flash Lite (Paling Hemat Token & Ringan)
+                st.caption("⚡ Menggunakan Gemini 2.5 Flash Lite")
                 model = ChatGoogleGenerativeAI(
                     model="gemini-2.5-flash-lite", 
                     temperature=0.1, 
                     google_api_key=api_key
                 )
+                chain = prompt_template | model | StrOutputParser()
                 
-                chain = get_prompt_template() | model | StrOutputParser()
-                
-                # Proses Streaming
-                with st.spinner("Menghubungi server..."):
-                    for chunk in chain.stream({"context": context_string, "question": prompt}):
+                for chunk in chain.stream({"context": context_string, "chat_history": langchain_history, "question": prompt}):
+                    full_response += chunk
+                    message_placeholder.markdown(full_response + "▌")
+
+            except Exception as e_lite:
+                try:
+                    # PILIHAN 2: Jika Pilihan 1 Gagal, Beralih ke Gemini 2.5 Flash
+                    st.caption("🔄 Lite sibuk/habis kuota, beralih ke Gemini 2.5 Flash...")
+                    model_25_flash = ChatGoogleGenerativeAI(
+                        model="gemini-2.5-flash", 
+                        temperature=0.1, 
+                        google_api_key=api_key
+                    )
+                    chain = prompt_template | model_25_flash | StrOutputParser()
+                    
+                    # Reset respons jika sempat terisi setengah sebelum error
+                    full_response = "" 
+                    for chunk in chain.stream({"context": context_string, "chat_history": langchain_history, "question": prompt}):
                         full_response += chunk
                         message_placeholder.markdown(full_response + "▌")
-
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": full_response,
-                    "context_retrieved": context_string # Tambahkan field baru ini
-                })
                         
-            except Exception as e:
-                # Jika masih error 404, gunakan fallback ke gemini-pro yang hampir pasti tersedia di semua versi
-                # st.warning("Menggunakan model cadangan karena kendala koneksi API.")
-                model_fallback = ChatGoogleGenerativeAI(model="gemini-flash-latest", temperature=0.1, google_api_key=api_key)
-                chain = get_prompt_template() | model_fallback | StrOutputParser()
-                
-                # Jalankan ulang invoke (atau stream) untuk fallback
-                full_response = chain.invoke({"context": context_string, "question": prompt})
-                message_placeholder.markdown(full_response)
+                except Exception as e_25:
+                    # PILIHAN 3: Jika Pilihan 2 Gagal, Gunakan Gemini 1.5 Flash (Latest) sebagai Penyelamat
+                    st.caption("🚨 Menggunakan Cadangan Terakhir: Gemini 1.5 Flash")
+                    model_15_flash = ChatGoogleGenerativeAI(
+                        model="gemini-1.5-flash", 
+                        temperature=0.1, 
+                        google_api_key=api_key
+                    )
+                    chain = prompt_template | model_15_flash | StrOutputParser()
+                    
+                    full_response = chain.invoke({
+                        "context": context_string, 
+                        "chat_history": langchain_history, 
+                        "question": prompt
+                    })
 
-                st.session_state.messages.append({
-                    "role": "assistant", 
-                    "content": full_response,
-                    "context_retrieved": context_string
-                })
+            # --- AKHIR PERCABANGAN ---
+            
+            # Tampilkan hasil akhir secara utuh dan simpan ke memori
+            message_placeholder.markdown(full_response)
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": full_response,
+                "context_retrieved": context_string 
+            })
 
-    # Sidebar Tools
+    # Bagian Sidebar Kontrol & Evaluasi
     with st.sidebar:
-        st.title("Opsi")
+        st.title("Panel Kontrol")
         if st.button("Hapus Riwayat Chat"):
             st.session_state.messages = []
             st.rerun()
         
+        # Fitur opsional: Mengunduh data percakapan saat ini untuk bahan evaluasi Tugas Akhir
         if st.session_state.messages:
-            history_data = []
-            for msg in st.session_state.messages:
-                row = {
-                    "Role": msg["role"],
-                    "Content": msg["content"],
-                    "Context_FAISS": msg.get("context_retrieved", "") # Ambil context jika ada
-                }
-                history_data.append(row)
-            
-            df = pd.DataFrame(st.session_state.messages)
+            df = pd.DataFrame([{
+                "Role": msg["role"], 
+                "Content": msg["content"], 
+                "Context_Retrieved": msg.get("context_retrieved", "")
+            } for msg in st.session_state.messages])
             csv = df.to_csv(index=False)
             st.download_button(
-                label="Download Dataset Evaluasi (CSV)",
+                label="Unduh Riwayat Obrolan (CSV)",
                 data=csv,
-                file_name=f"evaluasi_chat_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                file_name=f"evaluasi_rag_tieng_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
                 mime="text/csv"
             )
 
