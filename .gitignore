@@ -12,6 +12,7 @@ __pycache__/
 *.py[cod]
 
 cek_model.py
+chunks_cache.txt
 download_model.py
 evaluasi_ragas_fixed_v2.ipynb
 evaluasi_ragas_fixed.ipynb
@@ -25,8 +26,8 @@ generate_ragas_dataset.py
 hasil_evaluasi_final.csv
 hit_rate_analysis.py
 hit_rate_detail.csv
-ragas_answer_v1.csv
-ragas_answer_v2.csv
-ragas_answer_v3.csv
-ragas_answer.csv
+ragas_answers_v1.csv
+ragas_answers_v2.csv
+ragas_answers_v3.csv
+ragas_answers.csv
 ragas_dataset_perdes_tieng.xlsx
