@@ -20,3 +20,4 @@ PyPDF2
 pandas
 faiss-cpu
 python-dotenv
+reportlab
