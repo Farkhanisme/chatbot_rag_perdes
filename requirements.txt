@@ -15,6 +15,9 @@ google-ai-generativelanguage
 langchain-huggingface
 sentence-transformers
 
+# Pembantu BM25 Retriever
+rank_bm25
+
 # Pengolahan Data & PDF
 PyPDF2
 pandas
