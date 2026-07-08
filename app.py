@@ -256,8 +256,11 @@ def build_history(messages: list) -> list:
 
 
 MODEL_LIMITS = {
-    "lite" : {"name": "gemini-2.5-flash-lite", "rpd": 1000, "max_tokens": 600},
-    "flash": {"name": "gemini-2.5-flash",      "rpd": 20,   "max_tokens": 1200},
+    # RPD dinaikkan jauh karena sekarang menggunakan tier BERBAYAR
+    # (bukan lagi free tier 1.000/20 request per hari). Sesuaikan angka ini
+    # dengan kuota harian aktual sesuai paket billing Anda bila perlu.
+    "lite" : {"name": "gemini-2.5-flash-lite", "rpd": 100000, "max_tokens": 600},
+    "flash": {"name": "gemini-2.5-flash",      "rpd": 100000, "max_tokens": 1200},
 }
 
 
@@ -309,7 +312,8 @@ def _classify_rate_limit(err_str: str) -> str:
 
 
 def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
-                     model_type: str, start_idx: int) -> tuple[str, int]:
+                     model_type: str, start_idx: int,
+                     message_placeholder=None) -> tuple[str, int]:
     cfg = MODEL_LIMITS[model_type]
     n = len(api_keys)
     last_err: Exception | None = None
@@ -331,6 +335,11 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
             result = ""
             for chunk in chain.stream(payload):
                 result += chunk
+                if message_placeholder is not None:
+                    # Tampilkan progresif dengan kursor berkedip di akhir
+                    message_placeholder.markdown(result + "▌")
+            if message_placeholder is not None:
+                message_placeholder.markdown(result)
             return result
 
         try:
@@ -343,21 +352,11 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
             err_str = str(e)
             kind = _classify_rate_limit(err_str)
 
-            if kind == "minute":
-                wait = _parse_retry_delay(err_str) or 15
-                st.info(f"⏳ API key #{idx + 1} kena limit per-menit, tunggu {wait}s ...")
-                time.sleep(wait)
-                try:
-                    result = _stream_once()
-                    increment_usage(model_type, idx)
-                    st.session_state["active_key_idx"] = idx
-                    return result, idx
-                except Exception as e2:
-                    mark_key_exhausted(idx, model_type)
-                    last_err = e2
-                    continue
-
-            elif kind in ("day", "unknown"):
+            # Karena sekarang menggunakan tier berbayar, kita tidak lagi
+            # menunggu (time.sleep) saat kena limit per-menit — langsung
+            # tandai key ini dan pindah ke key berikutnya tanpa jeda,
+            # supaya pengguna tidak menunggu lama.
+            if kind in ("minute", "day", "unknown"):
                 mark_key_exhausted(idx, model_type)
                 last_err = e
                 continue
@@ -683,17 +682,17 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
                 start_idx = st.session_state.get("active_key_idx", 0)
 
                 try:
-                    with st.spinner("Menyusun jawaban..."):
-                        full_response, used_idx = call_model_tier(
-                            prompt_template, payload, api_keys, "lite", start_idx
-                        )
+                    full_response, used_idx = call_model_tier(
+                        prompt_template, payload, api_keys, "lite", start_idx,
+                        message_placeholder=message_placeholder
+                    )
                     model_used = f"Flash-Lite (key #{used_idx + 1})"
                 except Exception:
                     try:
-                        with st.spinner("Mencoba model cadangan..."):
-                            full_response, used_idx = call_model_tier(
-                                prompt_template, payload, api_keys, "flash", start_idx
-                            )
+                        full_response, used_idx = call_model_tier(
+                            prompt_template, payload, api_keys, "flash", start_idx,
+                            message_placeholder=message_placeholder
+                        )
                         model_used = f"Flash (key #{used_idx + 1})"
                     except Exception:
                         full_response = (
