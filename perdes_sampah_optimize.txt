@@ -1,105 +1,35 @@
-[KETENTUAN UMUM]
 # PERATURAN DESA TIENG NOMOR 02 TAHUN 2024 TENTANG PENGELOLAAN SAMPAH RUMAH TANGGA DAN PEDOMAN PENYELENGGARAAN BANK SAMPAH
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
+## BAB 1 KETENTUAN UMUM
 ### Pasal 1 (Definisi)
 * Pemerintahan Desa adalah penyelenggaraan urusan pemerintahan oleh kepentingan masyarakat setempat dalam sistem Pemerintahan Negara Kesatuan Republik Indonesia.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Sampah adalah sisa kegiatan sehari-hari manusia dan/atau proses alam yang berbentuk padat yang terdiri atas sampah rumah tangga maupun sampah sejenis sampah rumah tangga.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Sampah rumah tangga adalah sampah yang berasal dari kegiatan sehari-hari dalam rumah tangga yang sebagian besar terdiri dari sampah organik, tidak termasuk tinja dan sampah spesifik.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Sampah sejenis sampah rumah tangga adalah sampah yang tidak berasal dari rumah tangga dan berasal dari kawasan permukiman, kawasan komersial, kawasan industri, kawasan khusus, fasilitas umum, fasilitas sosial, dan/atau fasilitas lainnya.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Sampah spesifik adalah sampah yang karena sifat, konsentrasi dan/ atau volumenya memerlukan pengelolaan khusus.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Tempat sampah rumah tangga adalah wadah penampungan sampah yang berupa bak/bin/tong/kantong/keranjang sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Kawasan komersial adalah kawasan tempat pemusatan kegiatan usaha perdagangan dan/atau jasa yang dilengkapi dengan sarana dan prasarana penunjang.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Kawasan industri adalah kawasan tempat pemusatan kegiatan industri yang dilengkapi dengan sarana dan prasarana penunjang.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Penghasil sampah adalah setiap orang dan/ atau akibat proses alam yang menghasilkan timbulan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Pengelolaan Sampah adalah kegiatan yang sistematis, menyeluruh, dan berkesinambungan yang meliputi pengurangan dan penanganan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Pengelola Sampah adalah pihak melaksanakan pengelolaan sampah, yaitu Pemerintah Daerah, Pelaku Usaha/swasta dan anggota masyarakat yang melakukan pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Timbulan Sampah adalah volume sampah atau berat sampah yang dihasilkan dari jenis sumber sampah di wilayah tertentu persatuan waktu.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Sumber sampah adalah asal timbulan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Tempat Pengumpulan dan Pemilahan Sampah yang selanjutnya disingkat TPPS adalah tempat dilaksanakannya kegiatan pengumpulan dan pemilahan untuk menampung suatu di wilayah tertentu yang didirikan berdasarkan kondisi geografis dan jumlah volume sampah dari sumber sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Tempat Pengolahan Sampah yang selanjutnya disebut TPS adalah tempat dilaksanakannya kegiatan pengumpulan, pemilahan, penggunaan ulang, pendauran ulang, dan pengolahan dengan prinsip 3R (reduce, reuse, recycle).
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Kegiatan reduce, reuse, dan recycle atau batasi sampah, guna ulang sampah dan daur ulang sampah yang selanjutnya disebut Kegiatan 3R adalah segala aktivitas yang mampu mengurangi segala sesuatu yang dapat menimbulkan sampah, kegiatan penggunaan kembali sampah yang layak pakai untuk fungsi yang sama atau fungsi yang lain, dan kegiatan mengolah sampah untuk dijadikan produk baru.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Tempat Pemrosesan Akhir yang selanjutnya disebut TPA adalah tempat sebagai tempat untuk memproses dan mengembalikan sampah ke media lingkungan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Daur Ulang adalah kegiatan pemanfaatan materi yang terkandung dalam sampah anorganik.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Pengomposan adalah kegiatan pemanfaatan ulang sampah organik melalui proses pembusukan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Bank sampah adalah tempat pemilahan dan pengumpulan sampah yang dapat didaur ulang dan/atau diguna ulang yang memiliki nilai ekonomi.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Retribusi Pengelolaan Sampah, yang selanjutnya dapat disebut retribusi, adalah pungutan yang dilakukan oleh Pemerintah Desa kepada masyarakat atas jasa Penyelenggaraan Pengelolaan Sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Lingkungan adalah lingkungan hidup yaitu kesatuan ruang darat, laut maupun udara dengan semua benda, daya, keadaan dan mahluk hidup, termasuk manusia dan perilakunya, yang mempengaruhi kelangsungan perikehidupan dan kesejahteraan manusia serta mahluk hidup lainnya.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
-### Pasal 1 (Definisi)
 * Ramah Lingkungan adalah keadaan yang berhubungan dengan kualitas yang dapat dipakai kembali, dapat diuraikan secara biologis atau dapat dibuat kompos, dapat didaur ulang dan tidak beracun atau berbahaya bagi lingkungan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
+
 ### Pasal 2 (Ruang Lingkup)
 * Ruang lingkup dan kewenangan pengelolaan sampah yang diatur dalam Peraturan Desa ini meliputi:
 - sampah rumah tangga; dan
 - sampah sejenis sampah rumah tangga.
-<<<CHUNK_SEPARATOR>>>
-[BAB 1 KETENTUAN UMUM]
+
 ### Pasal 3 (Ruang Lingkup)
 * Sampah rumah tangga berasal dari kegiatan sehari-hari di dalam rumah tangga, tidak termasuk tinja dan sampah spesifik.
 * Sampah spesifik meliputi:
@@ -112,8 +42,8 @@
 - sampah limbah pertanian
 * Sampah sejenis sampah rumah tangga berasal dari kawasan komersial, kawasan industri, kawasan khusus, fasilitas sosial, fasilitas umum, dan/atau fasilitas lainnya.
 * Pemuda Peduli Lingkungan atau nama lain adalah Kelompak Masyarakat yang dibentuk oleh dengan semangat cinta lingkungan dan peduli terhadap kebersihan dan kesehatan lingkungan desa sekaligus menjadi kelompok pengelolaan sampah desa
-<<<CHUNK_SEPARATOR>>>
-[BAB 2 ASAS DAN TUJUAN]
+
+## BAB 2 ASAS DAN TUJUAN
 ### Pasal 4 (Asas Pengelolaan Sampah)
 * Pengelolaan Sampah Rumah Tangga dan Sampah Sejenis Sampah Rumah Tangga dilakukan berdasarkan asas:
 - harmoni, dan kelestarian lingkungan;
@@ -126,8 +56,7 @@
 - kesehatan;
 - keamanan; dan
 - nilai ekonomi.
-<<<CHUNK_SEPARATOR>>>
-[BAB 2 ASAS DAN TUJUAN]
+
 ### Pasal 5 (Tujuan Pengelolaan Sampah)
 * Pengelolaan Sampah Rumah Tangga dan Sampah Sejenis Sampah Rumah Tangga bertujuan:
 - mewujudkan lingkungan yang bersih dan sehat;
@@ -137,12 +66,10 @@
 - menjadikan sampah sebagai sumber daya; dan
 - mengubah perilaku masyarakat dalam penanganan sampah.
 * Pedoman Penyelenggaraan Bank Sampah bertujuan untuk memberikan pedoman pelaksanaan kegiatan 3R melalui bank sampah terhadap sampah rumah tangga;
-<<<CHUNK_SEPARATOR>>>
-[BAB 3 TUGAS DAN WEWENANG PEMERINTAH DESA]
+
+## BAB 3 TUGAS DAN WEWENANG PEMERINTAH DESA
 ### Pasal 6 (Tugas Pemerintah Desa)
 * Pemerintah Desa mempunyai tugas menjamin terselenggaranya pengelolaan sampah yang baik dan berwawasan lingkungan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 3 TUGAS DAN WEWENANG PEMERINTAH DESA]
 ### Pasal 7 (Rincian Tugas Pemerintah Desa)
 * Tugas Pemerintah Desa terdiri atas:
 - menumbuhkembangkan dan meningkatkan kesadaran masyarakat dalam penanganan sampah;
@@ -152,8 +79,6 @@
 - melaksanakan pengelolaan sampah dan memfasilitasi penyediaan prasarana dan sarana pengelolaan sampah sesuai dengan kebutuhan dan kemampuan desa;
 - mendorong dan memfasilitasi pengembangan manfaat hasil pengolahan sampah;
 - melakukan koordinasi antar lembaga pemerintah, masyarakat dan dunia usaha agar terdapat keterpaduan dalam pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 3 TUGAS DAN WEWENANG PEMERINTAH DESA]
 ### Pasal 8 (Wewenang Pemerintah Desa)
 * Dalam penyelenggaraan pengelolaan sampah, Pemerintah Desa mempunyai kewenangan:
 - membina kelembagaan, sumber daya manusia, sarana dan peralatan, serta pembiayaan yang mendukung pengelolaan persampahan yang menjadi kewenangan Pemerintah Desa;
@@ -166,16 +91,10 @@
 - memberikan perlindungan kepada masyarakat dari dampak kerusakan dan pencemaran lingkungan yang disebabkan oleh persampahan;
 - menyepakati besaran retribusi pengelolaan sampah
 - menerima dan meneruskan pengaduan masyarakat akibat pencemaran yang disebabkan oleh persampahan yang menjadi kewenangannya.
-<<<CHUNK_SEPARATOR>>>
-[BAB 3 TUGAS DAN WEWENANG PEMERINTAH DESA]
-### Pasal 8 (Wewenang Pemerintah Desa)
 * Penetapan lokasi Tempat Penampungan Sementara, TPPS, dan Rumah Pengolahan Sampah (RPS) merupakan bagian dari Rencana Tata Ruang Wilayah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 3 TUGAS DAN WEWENANG PEMERINTAH DESA]
-### Pasal 8 (Wewenang Pemerintah Desa)
 * Ketentuan lebih lanjut mengenai pedoman penyusunan sistem tanggap darurat diatur dengan peraturan Kepala Desa.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
+## BAB 4 PENGELOLAAN
 ### Pasal 9 (Pengelolaan Sampah)
 * Pemerintah Desa menyusun rencana pengurangan dan penanganan sampah yang dituangkan dalam rencana strategis dan Rencana Kerja Pemerintah Desa (RKPD).
 * Rencana pengurangan dan penanganan sampah sekurang-kurangnya memuat:
@@ -184,16 +103,14 @@
 - pola pengembangan kerjasama daerah, kemitraan, dan partisipasi masyarakat;
 - kebutuhan penyediaan pembiayaan yang ditanggung oleh pemerintah desa dan masyarakat;
 - rencana pengembangan dan pemanfaatan teknologi yang ramah lingkungan dalam memenuhi kebutuhan mengguna ulang, mendaur ulang, dan penanganan akhir sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 10 (Pengurangan Sampah)
 * Pemuda Peduli Lingkungan dan atau nama lain dalam mengurangi sampah dilakukan dengan cara pembatasan timbulan sampah, pendauran ulang sampah, dan/atau pemanfaatan kembali sampah.
 * Pengurangan sampah dilakukan melalui kegiatan:
 - pemantauan dan supervisi pelaksanaan rencana pemanfaatan bahan produksi ramah lingkungan dilakukan oleh kelompok masyarakat;
 - fasilitasi kepada masyarakat dan Kelompok Masyarakat dalam mengembangkan dan memanfaatkan hasil daur ulang, pemasaran hasil produk daur ulang, dan guna ulang sampah dilakukan oleh kelompok Pemuda Peduli Lingkungan atau nama lain dengan berkolaborasi dengan Pemerintah Desa
 - Besaran retribusi dari anggota ditetapkan oleh kelompok berdasarkan hasil musyawarah atau kesepakatan kelompok dengan anggota dan disetuhui oleh Pemerintah Desa
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 11 (Penanganan Sampah)
 * Kelompok Pemuda Lingkungan atau nama lain dalam menangani sampah dilakukan dengan cara:
 - pemilahan;
@@ -201,17 +118,14 @@
 - pengangkutan;
 - pengolahan; dan
 - pemrosesan akhir sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 12 (Pemilahan Sampah)
 * Pemilahan dilakukan dengan memilah sampah rumah tangga sesuai dengan jenis sampah;
 * Pemilahan sampah dilakukan dengan menyediakan fasilitas tempat sampah organik, anorganik, dan residu di setiap rumah tangga, kawasan permukiman, fasilitas umum, fasilitas sosial, dan fasilitas lainnya;
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 13 (Pengumpulan Sampah)
 * Pengumpulan dilakukan sejak pemindahan sampah dari tempat sampah rumah tangga ke Bank Sampah dan selanjutnya sampai ke TPS dengan tetap menjamin terpisahnya sampah sesuai dengan jenis sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 14 (Pengangkutan Sampah)
 * Pengangkutan sebagaimana dimaksud dalam Pasal 11 huruf c dilaksanakan dengan cara:
 - sampah rumah tangga ke bank sampah menjadi tanggung jawab pengelola sampah yang dibentuk oleh Kepala Desa;
@@ -221,48 +135,40 @@
 - sampah dari RPS ke TPA menjadi tanggung jawab kelompok dan atau pemerintah desa
 * Pelaksanaan pengangkutan sampah tetap menjamin terpisahnya sampah sesuai dengan jenis sampah.
 * Alat pengangkutan sampah harus memenuhi persyaratan keamanan, kesehatan lingkungan, kenyamanan, dan kebersihan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 15 (Pengolahan Sampah)
 * Pengolahan dilakukan dengan mengubah karakteristik, komposisi, dan jumlah sampah yang dilaksanakan di RPS.
 * Pengolahan sampah dilakukan dengan memanfaatkan kemajuan teknologi yang ramah lingkungan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 16 (Pemrosesan Akhir Sampah)
 * Pemrosesan akhir sampah sebagaimana dimaksud dalam Pasal 11 huruf e dilakukan dengan pengembalian sampah dan/atau residu hasil pengolahan ke media lingkungan secara aman.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 17 (Penyediaan TPS)
 * Pemerintah desa memfasilitasi TPS sesuai dengan kebutuhan dan kemampuan desa.
 * Penyediaan TPS harus memenuhi persyaratan teknis sistem pengolahan sampah yang aman dan ramah lingkungan sesuai ketentuan peraturan perundang-undangan serta sesuai dengan rencana tata ruang wilayah
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 18 (Lembaga Pengelola Sampah)
 * Pemerintah desa dalam melakukan pengurangan dan penanganan sampah bekerjasama dengan lembaga/kelompok masyarakat peduli lingkungan yang terdapat di desa.
 * Lembaga Pengelola Sampah, dilaksanakan oleh Unit Usaha Mandiri berupa Kelompok Swadaya Masyarakat (KSM) atau nama lain
 * Dalam pelaksanaanya, Unit Usaha Mandiri dapat memfasilitasi pembentukan lembaga pengelola sampah tingkat RT sesuai dengan kebutuhan;
 * Bentuk Lembaga Pengelola Sampah tingkat RT adalah Bank Sampah atau sebutan lain
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 19 (BUMDesa Pengelola Sampah)
 * Unit Usaha BUMDesa yang mengelola Persampahan mempunyai tugas melaksanakan kebijakan, strategi, dan rencana Pemerintah Desa dalam pengelolaan sampah dan bekerjasama dengan kelompok masyarakat dalam hal ini kelompok pemuda lingkungan atau sebutan lain
 * Unit Usaha BUMDesa yang mengelola Persampahan dalam melaksanakan tugas didasarkan atas:
 - terlaksananya pengelolaan sampah sesuai dengan ketentuan peraturan perundang-undangan;
 - tersedianya barang dan/atau jasa layanan untuk meningkatkan kualitas dan kuantitas pelayanan pengelolaan persampahan;
 - tertib administrasi pengelolaan persampahan dan pertanggungjawaban kepada Pemerintah Desa.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 20 (Tugas Lembaga Pengelola Sampah Tingkat RT)
 * Lembaga pengelola sampah tingkat rukun tetangga (RT) mempunyai tugas:
 - memfasilitasi tersedianya tempat sampah rumah tangga di masing-masing rumah tangga dan alat angkut dari tempat sampah rumah tangga ke Tempat Penampungan Sementara; dan
 - menjamin terwujudnya tertib pemilahan sampah di masing-masing rumah tangga.
 - mengusulkan kebutuhan TPPS ke Pemerintah Desa.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 21 (Peraturan Penarikan Biaya)
 Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang mengelola Persampahan dapat memungut dan mengelola biaya/retribusi atas barang dan/atau jasa layanan pengelolaan sampah sesuai tarif yang ditetapkan dengan keputusan Kepala Desa.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 22 (Apresiasi atau Hadiah)
 * Pemerintah desa dapat memberikan Apresiasi kepada kelompok masyarakat tetapi tidak terbatas pada lembaga pengelola sampah tingkat RW yang melakukan:
 - inovasi terbaik dalam pengelolaan sampah;
@@ -272,26 +178,22 @@ Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang 
 * Pemerintah desa dapat memberikan Apresiasi kepada perseorangan yang melakukan:
 - inovasi terbaik dalam pengelolaan sampah; dan/atau
 - pelaporan atas pelanggaran terhadap larangan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 23 (Depresiasi atau Denda)
 * Pemerintah desa memberikan Depresiasi kepada kelompok masyarakat dan perseorangan yang melakukan:
 - pelanggaran terhadap larangan; dan/atau
 - pelanggaran tertib penanganan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 24 (Bentuk Apresiasi atau Hadiah)
 * Apresiasi kepada kelompok masyarakat dan perseorangan dapat berupa:
 - pemberian penghargaan; dan/atau
 - pemberian subsidi.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 25 (Bentuk Depresiasi atau Denda)
 * Depresiasi kepada kelompok masyarakat dan perseorangan dapat berupa:
 - Kritikan, Komentar, Tinjauan, Ulasan
 - denda dalam bentuk barang/jasa.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 26 (Penilaian Dari Kepala Desa)
 * Kepala desa melakukan penilaian kepada perseorangan dan kelompok masyarakat terhadap:
 - inovasi pengelolaan sampah;
@@ -299,43 +201,27 @@ Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang 
 - pengurangan timbulan sampah;
 - tertib penanganan sampah;
 - pelanggaran tertib penanganan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 27 (Pemberian Apresiasi atau Depresiasi)
 * Pemberian Apresiasi dan atau Depresiasi disesuaikan dengan kemampuan desa dan kearifan lokal.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 28 (Kerja Sama, kemitraan dan investasi antar Pemerintah Desa dengan Lembaga atau Kelompok)
 * Pemerintah desa dan atau Kelompok Pemuda Peduli Lingkungan atau nama lain dapat melakukan kerja sama, kemitraan dan investasi dalam pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 29 (Kerja Sama)
 * Pemerintah Desa dan atau Kelompok Pemuda Peduli Lingkungan atau nama lain dapat melakukan kerjasama dalam melakukan pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
-### Pasal 29 (Kerja Sama)
 * Kerjasama dapat diwujudkan dalam bentuk kerjasama dan/atau pembuatan usaha bersama pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
-### Pasal 29 (Kerja Sama)
 * Penyelenggaraan kerjasama pengelolaan persampahan dapat dilakukan melalui:
 - kerjasama antara pemerintah desa dan atau Kelompok Pemuda Peduli Lingkungan atau nama lain dengan pemerintah di atasnya;
 - kerjasama pemerintah desa dan atau Kelompok Pemuda Peduli Lingkungan atau nama lain dengan masyarakat atau kelompok masyarakat di Desa Tieng atau dengan pihak swasta;
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
-### Pasal 29 (Kerja Sama)
 * Kerjasama dituangkan dalam bentuk perjanjian.
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
-### Pasal 29 (Kerja Sama)
 * Bentuk kerjasama meliputi:
 - pembangunan infrastruktur prasarana dan sarana;
 - pembiayaan pengoperasian dan pemeliharaan;
 - pengaturan tentang pengelolaan persampahan pada kawasan yang dilalui dan terlayani oleh jasa pengelolaan sampah, yang berupa penarikan retribusi pelayanan persampahan, pengangkutan sampah ke TPS dan peningkatan peran masyarakat dalam pengelolaan persampahan, ;
 - peningkatan manajemen dan kelembagaan pengelola persampahan;
 - peningkatan kemampuan pendanaan untuk pengoperasian dan pemeliharaan
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 30 (Kemitraan)
 * Pemerintah Desa secara sendiri atau bersama-sama pihak lain dapat bermitra dengan badan usaha pengelolaan sampah dalam penyelenggaraan pengelolaan sampah.
 * Kemitraan dituangkan dalam bentuk perjanjian antara Pemerintah Desa dan badan usaha yang bersangkutan.
@@ -348,8 +234,7 @@ Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang 
 - pengolahan sampah menjadi produk lainnya yang ramah lingkungan; dan
 - pemasaran produk hasil pengolahan dan daur ulang sampah.
 * Dalam pelaksanaan kemitraan dengan badan usaha, pemerintah desa dapat menunjuk kelompok pengelola sampah yang dibentuk oleh pemerintah desa untuk mengelola Persampahan sebagai pihak yang mewakili pemerintah desa
-<<<CHUNK_SEPARATOR>>>
-[BAB 4 PENGELOLAAN]
+
 ### Pasal 31 (Investasi)
 * Pemerintah desa secara sendiri atau bersama-sama pihak lain dapat melakukan investasi di bidang usaha pengelolaan dalam penyelenggaraan pengolahan sampah.
 * Investasi dibahas dan disepakati melalui Musyawarah Desa dan diatur dengan Peraturan Desa.
@@ -357,14 +242,14 @@ Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang 
 - investasi awal untuk pembangunan sistem pengelolaaan persampahan;
 - kerjasama investasi dalam pengolahan dan daur ulang sampah berbasis teknologi modern dan ramah lingkungan; atau
 - memfasilitasi investasi swasta dalam usaha pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 5 RETRIBUSI PELAYANAN PERSAMPAHAN]
+
+## BAB 5 RETRIBUSI PELAYANAN PERSAMPAHAN
 ### Pasal 32 (Penyelenggaraan Retribusi)
 * Kelompok masyarakat peduli lingkungan atau sebutan lain yang mengelola Persampahan dapat mengenakan retribusi atas pelayanan persampahan.
 * Retribusi pelayanan persampahan menjadi bagian yang tidak terpisahkan dari Peraturan Desa ini
 * Penyelenggaraan retribusi atas pelayanan persampahan berpedoman pada peraturan perundang-undangan.
-<<<CHUNK_SEPARATOR>>>
-[BAB 6 KOMPENSASI]
+
+## BAB 6 KOMPENSASI
 ### Pasal 33 (Kewajiban Kompensasi)
 * Pemerintah desa memberikan kompensasi kepada orang sebagai akibat dampak negatif yang ditimbulkan oleh penanganan sampah di tempat pemrosesan akhir sampah.
 * Kompensasi dapat berupa:
@@ -372,20 +257,18 @@ Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang 
 - biaya kesehatan dan pengobatan;
 - ganti rugi; dan/atau
 - bentuk lain.
-<<<CHUNK_SEPARATOR>>>
-[BAB 6 KOMPENSASI]
+
 ### Pasal 34 (Pemberian Kompensasi)
 * Tata cara pemberian kompensasi adalah sebagai berikut:
 - pengajuan surat pengaduan kepada pemerintah desa;
 - Pemerintah Desa melakukan investigasi atas kebenaran aduan dan dampak negatif pengelolaan sampah;
 - menetapkan bentuk kompensasi yang diberikan berdasarkan hasil investigasi dan hasil kajian.
-<<<CHUNK_SEPARATOR>>>
-[BAB 7 PERAN MASYARAKAT]
+
+## BAB 7 PERAN MASYARAKAT
 ### Pasal 35 (Peningkatan dan Kewajiban Peran Masyarakat)
 * Pemerintah desa berkewajiban meningkatkan peran masyarakat dalam pengelolaan sampah.
 * Masyarakat wajib secara aktif dalam proses pengelolaan dan pemilahan sampah rumah tangga dan sampah sejenis sampah rumah tangga
-<<<CHUNK_SEPARATOR>>>
-[BAB 7 PERAN MASYARAKAT]
+
 ### Pasal 36 (Bentuk Peran Masyarakat)
 * Bentuk peran masyarakat dalam pengelolaan sampah meliputi:
 - menjaga kebersihan lingkungan;
@@ -393,31 +276,21 @@ Unit Usaha BUMDesa dan kelompok Pemuda Peduli Lingkungan atau sebutan lain yang 
 - pemberian saran, usul, pengaduan, pertimbangan, dan pendapat dalam upaya peningkatan pengelolaan sampah di wilayahnya.
 
 Pasal 37 (Peningkatan Peran Masyarakat)
-<<<CHUNK_SEPARATOR>>>
-[BAB 7 PERAN MASYARAKAT]
-### Pasal 36 (Bentuk Peran Masyarakat)
 * Peningkatan peran masyarakat dalam menjaga kebersihan lingkungan dilaksanakan dengan cara:
 - sosialisasi;
 - mobilisasi;
 - kegiatan gotong royong;
 - pemberian apresiasi.
-<<<CHUNK_SEPARATOR>>>
-[BAB 7 PERAN MASYARAKAT]
-### Pasal 36 (Bentuk Peran Masyarakat)
 * Peningkatan peran masyarakat dalam kegiatan pengurangan, pengumpulan, pemilahan, pengangkutan, dan pengolahan sampah dilaksanakan dengan cara:
 - pelaksanaan kegiatan penanganan sampah rumah tangga dan sampah sejenis sampah rumah tangga yang dilakukan secara mandiri dan/atau bermitra dengan pemerintah desa;
 - mengembangkan informasi peluang usaha di bidang persampahan; dan/atau
 - pemberian apresiasi
-<<<CHUNK_SEPARATOR>>>
-[BAB 7 PERAN MASYARAKAT]
-### Pasal 36 (Bentuk Peran Masyarakat)
 * Peningkatan peran masyarakat dalam memberikan saran, usul, pengaduan, pertimbangan dan pendapat guna meningkatkan pengelolaan sampah dilaksanakan dengan cara:
 - pemberian pendidikan dan pelatihan, kampanye, dan pendampingan oleh kelompok masyarakat kepada anggota masyarakat dalam pengelolaan sampah untuk mengubah perilaku anggota masyarakat;
 - penyediaan media komunikasi;
 - aktif dan secara cepat memberi tanggapan; dan/atau
 - melakukan jaring pendapat aspirasi masyarakat.
-<<<CHUNK_SEPARATOR>>>
-[BAB 7 PERAN MASYARAKAT]
+
 ### Pasal 38 (Peraturan Khusus dalam Masyarakat)
 * Masyarakat yang dikoordinir oleh Pengurus RW dapat membuat peraturan khusus tentang persampahan di wilayah setempat.
 * Peraturan khusus tentang persampahan meliputi :
@@ -427,49 +300,62 @@ Pasal 37 (Peningkatan Peran Masyarakat)
 * Tempat-tempat tertentu yang tidak diperbolehkan untuk membuang sampah dibuatkan dengan papan nama yang jelas dan mudah dibaca, singkat dan mudah difahami, dibiayai dan atas nama Pemerintah Desa Tieng.
 * Penegakan disiplin atau hukuman pelanggaran terhadap pembuang di tempat-tempat yang dilarang untuk membuang sampah dikoordinasikan dan atas izin Kepala Dusun setempat.
 * Ketua RW dan/atau Kepala Dusun bertanggungjawab penuh terhadap penegakan disiplin.
-<<<CHUNK_SEPARATOR>>>
-[BAB 8 PENGAWASAN DAN PEMBINAAN]
+
+## BAB 8 PENGAWASAN DAN PEMBINAAN
 ### Pasal 39 (Pengawasan Pengelolaan Sampah)
 * Kepala Desa Desa mengkoordinasikan pengawasan dan pembinaan terhadap pelaksanaan pengelolaan sampah dalam wilayah desa.
 * Kepala Dusun mengkoordinasikan pengawasan terhadap pelaksanaan pengelolaan sampah dalam wilayah setempat.
 * Ketua RT dan Ketua RW melakukan pengawasan terhadap pelaksanaan pengelolaan sampah dalam wilayah setempat.
-<<<CHUNK_SEPARATOR>>>
-[BAB 8 PENGAWASAN DAN PEMBINAAN]
+
 ### Pasal 40 (Pembinaan Pengelolaan Sampah)
 * Kepala Desa melakukan pembinaan atas pengelolaan sampah dalam wilayah desa.
 * Kepala Dusun melakukan pembinaan atas pengelolaan sampah di wilayahnya.
 * Ketua RT dan Ketua RW melakukan pembinaan pengelolaan sampah di wilayahnya.
-<<<CHUNK_SEPARATOR>>>
-[BAB 8 PENGAWASAN DAN PEMBINAAN]
+
 ### Pasal 41 (Bentuk Pembinaan Pengelolaan Sampah oleh Kepala Desa)
 * Pembinaan oleh Kepala Desa meliputi:
 - pemberian pedoman dan standar pengelolaan sampah;
 - pemberian bimbingan, supervisi, dan konsultasi pengelolaan sampah;
 - pendidikan dan pelatihan di bidang pengelolaan sampah; dan
 - perencanaan, penelitian, pengembangan, pemantauan, dan evaluasi pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 8 PENGAWASAN DAN PEMBINAAN]
+
 ### Pasal 42 (Bentuk Pembinaan Pengelolaan Sampah oleh Kepala Dusun)
 * Pembinaan Kepala Dusun meliputi:
 - koordinasi kelembagaan pengelola sampah diwilayah setempat;
 - pemberian bimbingan, supervisi, dan konsultasi pengelolaan sampah;
 - perencanaan, pengembangan, pemantauan, dan evaluasi pengelolaan sampah.
-<<<CHUNK_SEPARATOR>>>
-[BAB 8 PENGAWASAN DAN PEMBINAAN]
+
 ### Pasal 43 (Bentuk Pembinaan Pengelolaan Sampah oleh Ketua RT dan RW)
 * Pembinaan Ketua RT dan Ketua RW sebagaimana dimaksud dalam Pasal 40 ayat (3) meliputi pemantauan, dan evaluasi pengelolaan sampah diwilayah setempat.
-<<<CHUNK_SEPARATOR>>>
-[BAB 9 PELAPORAN]
+
+## BAB 9 PELAPORAN
 ### Pasal 44 (Pelaporan Pengelolaan Sampah)
 * Kepala Dusun melaporkan pengelolaan sampah dan pembinaan terhadap pengelolaan sampah di lingkungan RW kepada Kepala Desa.
 * Ketua RT dan Ketua RW melaporkan pengelolaan sampah kepada Kepala Dusun atau langsung kepada Kepala Desa.
 * Laporan disampaikan kepada Pemerintah Desa sesuai dengan kebutuhan
-<<<CHUNK_SEPARATOR>>>
-[BAB 10 PEMBIAYAAN]
+
+## BAB 10 PEMBIAYAAN
 ### Pasal 45 (Pembiayaan Pembinaan)
 * Pembinaan Kepala Desa, Kepala Dusun, Ketua RT Ketua ketua RW dalam pengelolaan sampah di desa dibiayai dari anggaran pendapatan dan belanja desa dan/atau pembiayaan lainnya yang sah dan tidak mengikat.
-<<<CHUNK_SEPARATOR>>>
-[BAB 11 BANK SAMPAH]
+
+## BAB 11 BANK SAMPAH
+Pasal 46 (Tanggungjawab dan Pengelolaan Bank Sampah)
+* Bank Sampah didirikan dan dikelola oleh masyarakat atau kelompok masyarakat secara mandiri.
+* Pemerintah Desa bertanggungjawab dalam menfasilitasi dan pengembangan kegiatan Penyelenggaraan Bank Sampah yang meliputi :
+- pembinaan, pendampingan, dan bantuan teknis;
+- memperbanyak bank sampah;
+- pembangunan bank sampah percontohan;
+- membantu pemasaran hasil kegiatan bank sampah;
+- monitoring dan evaluasi pelaksanaan bank sampah;
+- pengembangan kerjasama dalam pelaksanaan bank sampah.
+* Kegiatan dan mekanisme bank sampah meliputi :
+- pemilahan sampah;
+- penyerahan sampah ke bank sampah;
+- penimbangan sampah;
+- pencatatan;
+- hasil penjualan sampah yang diserahkan dimasukkan ke dalam buku tabungan; dan
+- bagi hasil penjualan sampah antara penabung dan pelaksana.
+
 ### Pasal 47 (Pelaksanaan Bank Sampah)
 * Pelaksanaan bank sampah, meliputi:
 - penetapan hari kerja, yang diatur sebagai berikut:
@@ -508,24 +394,18 @@ Pasal 37 (Peningkatan Peran Masyarakat)
 + kantong pertama untuk plastik;
 + kantong kedua untuk kertas; dan
 + kantong ketiga untuk logam.
-<<<CHUNK_SEPARATOR>>>
-[BAB 11 BANK SAMPAH]
-### Pasal 47 (Pelaksanaan Bank Sampah)
 * Sistem Bagi Hasil, diatur sebagai berikut:
 - Besaran sistem bagi hasil bank sampah tergantung pada hasil rapat pengurus bank sampah.
 - Hasil keputusan besarnya bagi hasil tersebut kemudian disosialisasikan kepada semua penabung.
-<<<CHUNK_SEPARATOR>>>
-[BAB 11 BANK SAMPAH]
-### Pasal 47 (Pelaksanaan Bank Sampah)
 * Pemberian Upah Karyawan, diatur sebagai berikut:
 - untuk pengelolaan bank sampah yang dijalankan secara baik dan profesional, pengelola bank sampah bisa mendapatkan upah sesuai kemampuan keuangan kelompok.
 - tidak semua bank sampah dapat membayar upah karyawannya, maka bank sampah dijalankan pengurus secara sukarela dan tidak mendapatkan bayaran.
-<<<CHUNK_SEPARATOR>>>
-[BAB 12 KETENTUAN PERALIHAN]
+
+## BAB 12 KETENTUAN PERALIHAN
 ### Pasal 48 (Kondisi Penyelenggaraan Pengelolaan Sampah sebelumnya)
 * Penyelenggaraan pengelolaan sampah yang ada sebelum berlakunya Peraturan Desa ini tetap diakui keberadaannya dan menyesuaikan dengan Peraturan Desa ini.
-<<<CHUNK_SEPARATOR>>>
-[BAB 13 KETENTUAN PENUTUP]
+
+## BAB 13 KETENTUAN PENUTUP
 ### Pasal 49 (Tanggal Berlaku Peraturan Desa)
 * Peraturan desa ini mulai berlaku pada tanggal diundangkan, yaitu 18 Agustus 2024.
 * Peraturan desa ini Ditetapkan di Tieng Pada 8 Agustus 2024

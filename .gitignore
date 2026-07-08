@@ -13,21 +13,14 @@ __pycache__/
 
 cek_model.py
 chunks_cache.txt
+diagnose_retrieval.py
 download_model.py
-evaluasi_ragas_fixed_v2.ipynb
-evaluasi_ragas_fixed.ipynb
-evaluasi_ragas.csv
-evaluasi_ragas.ipynb
-evaluasi_ragas.py
-evaluasi.log
-gemma-2-9b-it.zip
+evaluate_ragas_asli.py
+generate_bukti_bab4.py
 generate_log.jsonl
+generate_ragas_dataset_4.py
 generate_ragas_dataset.py
-hasil_evaluasi_final.csv
 hit_rate_analysis.py
-hit_rate_detail.csv
-ragas_answers_v1.csv
-ragas_answers_v2.csv
-ragas_answers_v3.csv
 ragas_answers.csv
 ragas_dataset_perdes_tieng.xlsx
+ragas_eval_asli_per_baris.csv

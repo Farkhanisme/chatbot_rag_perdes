@@ -88,119 +88,85 @@ class HybridRetriever:
 
 
 # ================================================================
-# CHUNKING v2 — selaras dengan generate_ragas_dataset.py
+# CHUNKING v4.1 — selaras dengan generate_ragas_dataset_v4.py
 #
-# Perbaikan dibanding versi lama (hasil evaluasi RAGAS / hit-rate):
-# 1. BAB I (ketentuan umum) dipecah PER DEFINISI, bukan satu blok
-#    besar — soal "apa yang dimaksud dengan X" jadi jauh lebih akurat
-#    ke-retrieve.
-# 2. Ayat panjang yang berisi daftar huruf (a, b, c, ...) TIDAK LAGI
-#    dipecah per-huruf satuan (itu menghilangkan konteks ayat induk).
-#    Sekarang split per ayat (1)(2)(3); jika masih >800 karakter baru
-#    dipecah per grup 3 item huruf, dengan kalimat pembuka ayat tetap
-#    disertakan di tiap sub-chunk.
+# Diganti total dari chunking v2 (split "Pasal\s+\d+" + BAB1 per
+# definisi + ayat per grup huruf) ke chunking berbasis Markdown
+# header ("### Pasal") yang jauh lebih ringan, plus auto-split untuk
+# Pasal yang kepanjangan:
+# 1. File sumber sekarang versi Markdown (perdes_sampah_optimize.txt).
+# 2. Split utama hanya di baris "### Pasal N (...)" — super ringan,
+#    tidak perlu parsing ayat/huruf manual.
+# 3. Fix label BAB: header "## BAB ..." yang nyangkut di ekor Pasal
+#    terakhir suatu BAB dipotong dulu sebelum dipakai sebagai label
+#    BAB PASAL BERIKUTNYA (bukan pasal saat ini).
+# 4. split_large_pasal(): chunk > pasal_split_threshold (mis. Pasal
+#    47 yang berisi banyak sub-topik) dipecah lagi otomatis per bullet
+#    level-0 ("* ..."), dengan header [BAB]/Pasal tetap disertakan di
+#    tiap pecahan supaya konteksnya tidak hilang.
 # ================================================================
-def _split_bab1_definisi(bab1_text: str, bab_header: str) -> list[str]:
-    """Pecah blok BAB 1 menjadi chunk per item definisi."""
-    parts = re.split(r'\n(?=\d{1,2}\.\s)', bab1_text)
+def split_large_pasal(pasal_chunk: str, max_len: int = 1200) -> list[str]:
+    """Pecah 1 chunk Pasal yang kepanjangan menjadi beberapa sub-chunk
+    yang lebih kecil dan presisi, berdasarkan bullet level-0 ("* ...").
+    Header "[BAB ...]" dan "### Pasal N (...)" disalin ulang ke tiap
+    pecahan supaya konteksnya tetap ada meski chunk-nya sudah kecil.
+    Chunk yang masih di bawah `max_len` dibiarkan apa adanya."""
+    if len(pasal_chunk) <= max_len:
+        return [pasal_chunk]
+
+    lines = pasal_chunk.split("\n")
+
+    # Ambil baris header di awal chunk: "[BAB ...]" dan "### Pasal N (...)"
+    header_lines = []
+    i = 0
+    while i < len(lines) and not lines[i].lstrip().startswith("* "):
+        header_lines.append(lines[i])
+        i += 1
+    header = "\n".join(header_lines).strip()
+    body = "\n".join(lines[i:])
+
+    if not body.strip():
+        # Tidak ada bullet level-0 yang bisa dipakai sebagai titik pecah
+        return [pasal_chunk]
+
+    # Pecah body berdasarkan bullet level-0 baru; sub-bullet ("  - ...")
+    # otomatis ikut ke segmen induknya
+    segments = re.split(r'\n(?=\* )', body)
+    segments = [s.strip() for s in segments if s.strip()]
+
+    return [f"{header}\n{seg}" for seg in segments]
+
+
+def build_chunks_from_text(raw_text: str, pasal_split_threshold: int = 1200) -> list[str]:
+    """Chunking berbasis Markdown Header, dengan auto-split untuk Pasal kepanjangan."""
+    # Pecah berdasarkan pola "### Pasal"
+    parts = re.split(r'\n(?=###\s+Pasal)', raw_text)
 
     chunks = []
-    pasal_header = ""
-    pasal_match = re.search(r'(Pasal\s+\d+)', parts[0], re.IGNORECASE)
-    if pasal_match:
-        pasal_header = pasal_match.group(1)
+    current_bab = "KETENTUAN UMUM"
 
     for part in parts:
         part = part.strip()
         if not part:
             continue
 
-        is_definisi = bool(re.match(r'^\d{1,2}\.\s', part))
-
-        if is_definisi:
-            header = f"[{bab_header} | {pasal_header} | Definisi]"
-            chunks.append(f"{header}\n{part}")
-        else:
-            if len(part) > 20:
-                header = f"[{bab_header} | {pasal_header}]"
-                chunks.append(f"{header}\n{part}")
-
-    return chunks
-
-
-def _split_ayat_with_huruf_list(ayat_text: str) -> list[str]:
-    """
-    Pecah satu ayat yang sangat panjang dan berisi daftar berlabel huruf
-    (a. ... b. ... c. ...) menjadi beberapa sub-chunk lebih kecil, TANPA
-    kehilangan konteks ayat induknya (kalimat pembuka ayat ikut disertakan
-    di tiap sub-chunk).
-    """
-    intro_match = re.split(r'\n(?=[a-z]\.\s)', ayat_text, maxsplit=1)
-    if len(intro_match) < 2:
-        return [ayat_text]
-
-    intro, rest = intro_match[0].strip(), intro_match[1]
-    items = re.split(r'\n(?=[a-z]\.\s)', rest)
-    items = [i.strip() for i in items if i.strip()]
-
-    GROUP_SIZE = 3
-    sub_chunks = []
-    for i in range(0, len(items), GROUP_SIZE):
-        group = items[i:i + GROUP_SIZE]
-        sub_chunks.append(intro + "\n" + "\n".join(group))
-
-    return sub_chunks if sub_chunks else [ayat_text]
-
-
-def build_chunks_from_text(raw_text: str) -> list[str]:
-    """Chunking v2 dengan penanganan khusus untuk BAB 1 (definisi)."""
-    pasal_splits = re.split(r'\n(?=Pasal\s+\d+)', raw_text, flags=re.IGNORECASE)
-    chunks = []
-    current_bab = "BAB I KETENTUAN UMUM"
-    in_bab1 = True
-
-    for part in pasal_splits:
-        part_cleaned = part.strip()
-        if not part_cleaned:
-            continue
-
-        bab_match = re.search(r'(BAB\s+(?:[IVXLC]+|\d+)[^\n]*)', part_cleaned, re.IGNORECASE)
+        # Fix label BAB: karena split hanya terjadi di "### Pasal" (bukan
+        # di "## BAB"), header BAB berikutnya sering ikut nyangkut di EKOR
+        # teks Pasal terakhir suatu BAB. Potong dulu baris "## BAB ..." dari
+        # isi pasal saat ini, lalu simpan sebagai current_bab untuk PASAL
+        # BERIKUTNYA saja.
+        bab_match = re.search(r'\n##\s+(BAB\s+[^\n]+)', "\n" + part)
+        next_bab = None
         if bab_match:
-            current_bab = bab_match.group(1).strip()
-            if not re.search(r'BAB\s+(I|1)\b', current_bab, re.IGNORECASE):
-                in_bab1 = False
+            part = part[:bab_match.start()].strip()
+            next_bab = bab_match.group(1).strip()
 
-        pasal_match = re.match(r'(Pasal\s+\d+)', part_cleaned, re.IGNORECASE)
-        pasal_header = pasal_match.group(1) if pasal_match else ""
+        full_chunk = f"[{current_bab}]\n{part}"
+        # Pecah lagi kalau chunk-nya kepanjangan (Pasal 47, Pasal 1, dll)
+        chunks.extend(split_large_pasal(full_chunk, max_len=pasal_split_threshold))
 
-        # ── Khusus BAB 1: pecah per definisi ──────────────────────
-        has_definisi = bool(re.search(r'\n\d{1,2}\.\s+\S', part_cleaned))
-        if in_bab1 and has_definisi:
-            definisi_chunks = _split_bab1_definisi(part_cleaned, current_bab)
-            if definisi_chunks:
-                chunks.extend(definisi_chunks)
-                continue
-
-        # ── Pasal biasa ──────────────────────────────────────────
-        if len(part_cleaned) <= 600:
-            header = f"[{current_bab} | {pasal_header}]" if pasal_header else f"[{current_bab}]"
-            chunks.append(f"{header}\n{part_cleaned}")
-        else:
-            # Sub-split HANYA per ayat (1)(2)(3) — daftar huruf a,b,c
-            # tetap menyatu dengan ayat induknya.
-            ayat_splits = re.split(r'\n(?=\s*\(\d+\)\s)', part_cleaned)
-            for ayat in ayat_splits:
-                ayat_cleaned = ayat.strip()
-                if len(ayat_cleaned) < 20:
-                    continue
-                header = f"[{current_bab} | {pasal_header}]" if pasal_header else f"[{current_bab}]"
-
-                if len(ayat_cleaned) > 800:
-                    sub_chunks = _split_ayat_with_huruf_list(ayat_cleaned)
-                    for sub in sub_chunks:
-                        chunks.append(f"{header}\n{sub}")
-                else:
-                    chunks.append(f"{header}\n{ayat_cleaned}")
+        if next_bab:
+            current_bab = next_bab
 
     return [c for c in chunks if len(c.strip()) > 10]
 
@@ -215,7 +181,11 @@ def get_resources():
         encode_kwargs={"normalize_embeddings": True}
     )
 
-    file_path = "perdes_sampah.txt"
+    # v4: file sumber diganti ke versi Markdown (optimize) — selaras
+    # dengan generate_ragas_dataset_v4.py. Chunking lama tidak kompatibel
+    # dengan file ini, jadi faiss_index/ & chunks_cache.txt lama harus
+    # dihapus dulu supaya dibangun ulang dengan chunking baru.
+    file_path = "perdes_sampah_optimize.txt"
     chunks = []
 
     if not os.path.exists("faiss_index"):
@@ -223,7 +193,7 @@ def get_resources():
             return None, None, None
         with open(file_path, "r", encoding="utf-8") as f:
             raw_text = f.read()
-        chunks = build_chunks_from_text(raw_text)
+        chunks = build_chunks_from_text(raw_text, pasal_split_threshold=RAG_CONFIG["pasal_split_threshold"])
         vector_store = FAISS.from_texts(chunks, embedding=embeddings)
         vector_store.save_local("faiss_index")
         with open("chunks_cache.txt", "w", encoding="utf-8") as f:
@@ -235,7 +205,7 @@ def get_resources():
         elif os.path.exists(file_path):
             with open(file_path, "r", encoding="utf-8") as f:
                 raw_text = f.read()
-            chunks = build_chunks_from_text(raw_text)
+            chunks = build_chunks_from_text(raw_text, pasal_split_threshold=RAG_CONFIG["pasal_split_threshold"])
 
     vector_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
 
@@ -256,52 +226,24 @@ def get_resources():
 
 @st.cache_resource
 def get_reranker():
-    return CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+    # v4.1: ganti dari cross-encoder/ms-marco-MiniLM-L-6-v2 (khusus B.Inggris)
+    # ke BAAI/bge-reranker-v2-m3 (multibahasa, senasab dgn embedding bge-m3),
+    # supaya skor relevansi lebih terkalibrasi untuk teks Bahasa Indonesia.
+    return CrossEncoder("BAAI/bge-reranker-v2-m3", max_length=512)
 
 
 # ================================================================
-# RETRIEVAL + RERANKING v2 — selaras dengan generate_ragas_dataset.py
+# RETRIEVAL + RERANKING v4.1 — selaras dengan generate_ragas_dataset_v4.py
 #
-# Perbaikan dibanding versi lama:
-# • rerank_threshold 0.0 (dulu tanpa filter) — buang kandidat yang
-#   cuma "kebetulan" mirip secara leksikal (noise).
-# • top_n_rerank 7 (dulu 3) — soal yang jawabannya tersebar di 2+
-#   pasal butuh slot lebih banyak agar semuanya lolos ke context.
-# • Deduplication — hapus chunk duplikat/near-duplicate.
-# • Definition boost — chunk BAB 1 bertag "| Definisi]" dapat bonus
-#   skor saat pertanyaan berpola "apa yang dimaksud dengan X",
-#   supaya tidak kalah saing vs pasal lain yang cuma menyinggung
-#   kata kunci yang sama secara sambil lalu.
-# • Smart truncate — potong context di batas antar-chunk ("---"),
-#   bukan di tengah kalimat.
+# Catatan migrasi dari v2: fitur "definition boost" dan glosarium
+# otomatis (berbasis tag chunk "| Definisi]") DIHAPUS pada versi ini,
+# karena chunking v4 (berbasis Markdown "### Pasal" + split_large_pasal)
+# tidak lagi menghasilkan tag "| Definisi]" tsb — fitur itu jadi kode
+# mati (tidak pernah match) sekaligus memboroskan panggilan retrieval
+# & rerank tambahan per istilah glosarium. Pipeline sekarang murni:
+# hybrid search → dedup → rerank → filter threshold → top_n →
+# smart truncate, persis seperti retrieve_and_rerank() di v4.
 # ================================================================
-_DEFINITION_QUESTION_PATTERN = re.compile(
-    r'apa\s+(yang\s+dimaksud|definisi|arti|pengertian)|'
-    r'jelaskan\s+(apa\s+itu|pengertian)|'
-    r'apa\s+itu\b',
-    re.IGNORECASE,
-)
-_DEFINITION_CHUNK_PATTERN = re.compile(r'\|\s*Definisi\s*\]')
-
-
-def _is_definition_question(question: str) -> bool:
-    return bool(_DEFINITION_QUESTION_PATTERN.search(question))
-
-
-def _apply_definition_boost(question: str, docs: list, scores) -> list:
-    """Beri bonus skor ke chunk definisi BAB 1 saat pertanyaan berpola definisi."""
-    BOOST = 4.0
-    if not _is_definition_question(question):
-        return list(scores)
-    boosted = []
-    for doc, score in zip(docs, scores):
-        if _DEFINITION_CHUNK_PATTERN.search(doc.page_content.split("\n", 1)[0]):
-            boosted.append(score + BOOST)
-        else:
-            boosted.append(score)
-    return boosted
-
-
 def _deduplicate_chunks(docs: list) -> list:
     """Hapus chunk duplikat atau near-duplicate (subset string)."""
     seen_content, result = [], []
@@ -327,87 +269,11 @@ def _smart_truncate(context_str: str, max_chars: int) -> str:
     return context_str[:max_chars]
 
 
-# ================================================================
-# AUTO-GLOSARIUM ISTILAH SAMPAH
-#
-# Masalah: warga sering tidak paham istilah kategori sampah (organik,
-# anorganik, residu, spesifik/B3, dst.) yang disebut dalam jawaban,
-# padahal definisinya ADA di BAB 1 (Ketentuan Umum) perdes — hanya saja
-# tidak ikut ter-retrieve karena pertanyaan warga tidak memakai kata
-# itu secara eksplisit (mis. "bagaimana cara memilah sampah?" tidak
-# mengandung kata "organik").
-#
-# Solusi: setelah context utama didapat, pindai istilah kategori sampah
-# yang MUNCUL di context/pertanyaan, cari definisi resminya lewat
-# retrieval terpisah (query "apa yang dimaksud dengan <istilah>"), lalu
-# sisipkan ke context sebagai blok "[Definisi istilah terkait]" — supaya
-# LLM tetap menjawab HANYA berdasarkan konteks (tidak mengarang), tapi
-# konteksnya sekarang sudah memuat penjelasan istilah tersebut.
-# ================================================================
-GLOSSARY_TERMS = [
-    "sampah organik", "sampah anorganik", "sampah residu",
-    "sampah spesifik", "sampah B3", "bank sampah",
-    "TPS3R", "TPS", "TPA", "daur ulang", "pengomposan", "kompos",
-]
-
-MAX_GLOSSARY_EXTRA_CHARS = 1500
-
-
-def _find_definition_chunk(term: str, hybrid_retriever, reranker: CrossEncoder) -> str | None:
-    """Cari 1 chunk definisi terbaik untuk sebuah istilah, kalau ada di dokumen."""
-    query = f"apa yang dimaksud dengan {term}"
-    candidates = hybrid_retriever.invoke(query)
-    if not candidates:
-        return None
-    candidates = _deduplicate_chunks(candidates)
-
-    pairs = [(query, doc.page_content) for doc in candidates]
-    scores = reranker.predict(pairs)
-    scores = _apply_definition_boost(query, candidates, scores)
-
-    ranked = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)
-    top_score, top_doc = ranked[0]
-
-    # Hanya terima kalau memang chunk definisi & skornya lolos threshold —
-    # supaya tidak menyisipkan chunk yang cuma kebetulan mirip.
-    is_definisi_chunk = bool(_DEFINITION_CHUNK_PATTERN.search(top_doc.page_content.split("\n", 1)[0]))
-    if is_definisi_chunk and top_score >= RAG_CONFIG["rerank_threshold"]:
-        return top_doc.page_content
-    return None
-
-
-def augment_context_with_glossary(question: str, base_context: str, hybrid_retriever, reranker: CrossEncoder) -> str:
-    """Deteksi istilah kategori sampah yang relevan lalu tambahkan definisinya ke context."""
-    text_lower = (question + "\n" + base_context).lower()
-    extra_parts, seen_terms, total_extra = [], set(), 0
-
-    for term in GLOSSARY_TERMS:
-        tl = term.lower()
-        if tl in seen_terms or tl not in text_lower:
-            continue
-        seen_terms.add(tl)
-
-        def_chunk = _find_definition_chunk(term, hybrid_retriever, reranker)
-        if not def_chunk:
-            continue
-        # Jangan duplikat kalau definisinya kebetulan sudah ikut di context utama.
-        if def_chunk in base_context or def_chunk in "\n\n---\n\n".join(extra_parts):
-            continue
-        if total_extra + len(def_chunk) > MAX_GLOSSARY_EXTRA_CHARS:
-            break
-        extra_parts.append(def_chunk)
-        total_extra += len(def_chunk)
-
-    if not extra_parts:
-        return base_context
-
-    glossary_block = "\n\n---\n\n".join(extra_parts)
-    return f"{base_context}\n\n---\n\n[Definisi istilah terkait]\n{glossary_block}"
-
-
 def retrieve_and_rerank(question: str, hybrid_retriever, reranker: CrossEncoder) -> tuple[list, str]:
-    """Pipeline retrieval v2: hybrid search → dedup → rerank + boost definisi
-    → filter threshold → smart truncate."""
+    """Pipeline retrieval v4.1: hybrid search → dedup → rerank → filter
+    threshold → top_n → smart truncate (identik dengan retrieve_and_rerank()
+    di generate_ragas_dataset_v4.py, minus query expansion — lihat catatan
+    di bawah RAG_CONFIG soal kenapa query expansion tidak dipakai di sini)."""
     candidate_docs = hybrid_retriever.invoke(question)
     if not candidate_docs:
         return [], ""
@@ -416,7 +282,6 @@ def retrieve_and_rerank(question: str, hybrid_retriever, reranker: CrossEncoder)
 
     pairs = [(question, doc.page_content) for doc in candidate_docs]
     scores = reranker.predict(pairs)
-    scores = _apply_definition_boost(question, candidate_docs, scores)
 
     threshold = RAG_CONFIG["rerank_threshold"]
     scored_docs = [(s, d) for s, d in zip(scores, candidate_docs) if s >= threshold]
@@ -432,31 +297,64 @@ def retrieve_and_rerank(question: str, hybrid_retriever, reranker: CrossEncoder)
     context_str = "\n\n---\n\n".join(contexts)
     context_str = _smart_truncate(context_str, RAG_CONFIG["max_context_chars"])
 
-    # Sisipkan definisi istilah kategori sampah (organik/anorganik/residu/dst.)
-    # yang disebut tapi belum ikut ter-retrieve, supaya jawaban ke warga
-    # otomatis menjelaskan istilah tersebut.
-    context_str = augment_context_with_glossary(question, context_str, hybrid_retriever, reranker)
-
     return contexts, context_str
 
 
 # ================================================================
-# EFISIENSI 1: RESPONSE CACHE
-# Hash pertanyaan + konteks → simpan jawaban di session_state.
-# Pertanyaan yang sama persis TIDAK memanggil API → hemat RPD & TPM.
+# EFISIENSI 1: RESPONSE CACHE — DUA TINGKAT
+#
+# Masalah cache lama: disimpan di st.session_state (per-sesi browser),
+# jadi tidak pernah "nular" ke warga lain meski pertanyaannya identik —
+# potensi hemat terbesar (pertanyaan umum yang ditanya BANYAK warga
+# berbeda) tidak pernah kepakai.
+#
+# Tapi cache tidak bisa asal di-share, karena jawaban LLM juga
+# dipengaruhi `chat_history` (2 giliran terakhir obrolan) yang TIDAK
+# ikut jadi bagian cache key. Kalau di-share apa adanya, warga lain
+# bisa kebagian jawaban yang sebenarnya "diracik" mengikuti alur
+# obrolan orang lain.
+#
+# Solusi — pisahkan berdasarkan ADA/TIDAKNYA riwayat obrolan:
+# • Pertanyaan giliran PERTAMA (chat_history kosong) → jawabannya murni
+#   berdasar context pasal, tidak dipengaruhi obrolan siapa pun → AMAN
+#   di-share ke semua warga lewat SHARED_CACHE (st.cache_resource,
+#   hidup selama proses Streamlit berjalan, dipakai bersama semua sesi).
+# • Pertanyaan LANJUTAN (chat_history ada isinya) → tetap per-sesi
+#   seperti sebelumnya (st.session_state), karena jawabannya memang
+#   khusus untuk alur obrolan orang itu.
 # ================================================================
-def get_cache_key(question: str, context: str) -> str:
-    combined = f"{question.strip().lower()}||{context[:200]}"
+@st.cache_resource
+def get_shared_cache() -> dict:
+    """Dict jawaban BERSAMA lintas sesi/warga — HANYA untuk pertanyaan
+    tanpa riwayat obrolan. Dibuat sekali lewat st.cache_resource sehingga
+    objek dict yang sama dipakai oleh semua pengguna aplikasi ini selama
+    proses Streamlit-nya tidak restart."""
+    return {}
+
+
+def get_cache_key(question: str, context: str, has_history: bool) -> str:
+    # Prefix "fresh"/"with_history" memastikan 2 skenario ini TIDAK
+    # pernah dianggap sama, meski teks pertanyaan & context-nya identik.
+    scope = "with_history" if has_history else "fresh"
+    combined = f"{scope}||{question.strip().lower()}||{context[:200]}"
     return hashlib.md5(combined.encode()).hexdigest()
 
-def get_cached_response(cache_key: str) -> str | None:
-    cache = st.session_state.get("response_cache", {})
+
+def get_cached_response(cache_key: str, has_history: bool) -> str | None:
+    if has_history:
+        cache = st.session_state.get("response_cache", {})
+    else:
+        cache = get_shared_cache()
     return cache.get(cache_key)
 
-def set_cached_response(cache_key: str, response: str):
-    if "response_cache" not in st.session_state:
-        st.session_state["response_cache"] = {}
-    st.session_state["response_cache"][cache_key] = response
+
+def set_cached_response(cache_key: str, response: str, has_history: bool):
+    if has_history:
+        if "response_cache" not in st.session_state:
+            st.session_state["response_cache"] = {}
+        st.session_state["response_cache"][cache_key] = response
+    else:
+        get_shared_cache()[cache_key] = response
 
 
 # ================================================================
@@ -465,14 +363,24 @@ def set_cached_response(cache_key: str, response: str):
 # Potong juga histori percakapan: hanya 2 giliran terakhir (bukan semua).
 # Ini mencegah pemborosan TPM yang tidak perlu.
 # ================================================================
-# RAG_CONFIG diselaraskan dengan CONFIG di generate_ragas_dataset.py,
+# RAG_CONFIG diselaraskan dengan CONFIG di generate_ragas_dataset_v4.py,
 # supaya kualitas retrieval chatbot ini konsisten dengan hasil yang
-# sudah divalidasi lewat hit_rate_analysis.py / evaluasi RAGAS.
+# sudah divalidasi lewat evaluasi RAGAS v4 (chunking Markdown + auto-split
+# pasal panjang + reranker multibahasa bge-reranker-v2-m3).
+#
+# Catatan: "use_query_expansion" di v4 TIDAK diikutsertakan di sini secara
+# sengaja — fitur itu menambah 1 panggilan LLM per pertanyaan warga, yang
+# bertentangan dengan strategi efisiensi kuota free-tier chatbot ini
+# (lihat komentar EFISIENSI di atas). v4 dipakai untuk generate dataset
+# evaluasi offline sehingga biaya token tambahan itu tidak masalah;
+# di chatbot interaktif ini, tiap panggilan LLM ekstra mengurangi RPD
+# yang tersedia untuk warga.
 RAG_CONFIG = {
-    "top_k_retrieval"  : 15,   # kandidat awal sebelum reranking
-    "top_n_rerank"     : 7,    # chunk final yang dikirim ke LLM
-    "rerank_threshold" : 0.0,  # buang kandidat skor CrossEncoder < 0.0
-    "max_context_chars": 9000, # cukup untuk ~5-7 chunk penuh
+    "top_k_retrieval"      : 10,    # kandidat awal sebelum reranking (v4: turun dari 15)
+    "top_n_rerank"         : 4,     # chunk final yang dikirim ke LLM (v4: turun dari 7)
+    "rerank_threshold"     : 0.0,   # buang kandidat skor CrossEncoder < 0.0
+    "max_context_chars"    : 2500,  # v4: turun drastis dari 9000 (chunk kini lebih kecil & presisi)
+    "pasal_split_threshold": 1200,  # chunk > 1200 char dipecah otomatis per bullet level-0
 }
 
 MAX_HISTORY_TURNS = 2      # Hanya 2 giliran terakhir (user+assistant)
@@ -513,6 +421,22 @@ MODEL_LIMITS = {
 }
 
 
+def _get_secret(name: str) -> str | None:
+    """
+    Ambil satu nilai dari st.secrets dengan aman.
+    Jika file .streamlit/secrets.toml tidak ada sama sekali (mis. saat
+    dijalankan lokal tanpa Streamlit Cloud), st.secrets akan melempar
+    StreamlitSecretNotFoundError bahkan hanya untuk mengecek keberadaan
+    key ("in st.secrets"). Fungsi ini menangkap kasus itu dan cukup
+    mengembalikan None, supaya aplikasi tetap bisa jalan dengan
+    environment variable / .env saja.
+    """
+    try:
+        return st.secrets.get(name)
+    except Exception:
+        return None
+
+
 def load_api_keys() -> list[str]:
     """
     Muat hingga 7 API key. Urutan pencarian:
@@ -523,23 +447,17 @@ def load_api_keys() -> list[str]:
     keys = []
     for i in range(1, 8):
         env_name = f"GOOGLE_API_KEY_{i}"
-        k = os.getenv(env_name)
-        if not k and env_name in st.secrets:
-            k = st.secrets.get(env_name)
+        k = os.getenv(env_name) or _get_secret(env_name)
         if k and k.strip():
             keys.append(k.strip())
 
     if not keys:
-        raw = os.getenv("GOOGLE_API_KEYS")
-        if not raw and "GOOGLE_API_KEYS" in st.secrets:
-            raw = st.secrets.get("GOOGLE_API_KEYS")
+        raw = os.getenv("GOOGLE_API_KEYS") or _get_secret("GOOGLE_API_KEYS")
         if raw:
             keys = [k.strip() for k in raw.split(",") if k.strip()]
 
     if not keys:
-        single = os.getenv("GOOGLE_API_KEY")
-        if not single and "GOOGLE_API_KEY" in st.secrets:
-            single = st.secrets.get("GOOGLE_API_KEY")
+        single = os.getenv("GOOGLE_API_KEY") or _get_secret("GOOGLE_API_KEY")
         if single and single.strip():
             keys = [single.strip()]
 
@@ -939,6 +857,58 @@ def local_css():
             .app-hero h1 { font-size: 1.5rem; margin: 0 0 4px 0; }
             .app-hero p { margin: 0; opacity: 0.92; font-size: 0.95rem; }
 
+            /* ── Baris tombol atas (New chat / Unduh / Tentang) ───────────
+               Tidak lagi memakai st.columns() (lihat komentar di Python),
+               jadi di sini kita paksa flex-row langsung pada blok vertikal
+               bawaan Streamlit yang membungkus ke-3 tombol tsb. Pendekatan
+               ini menghindari CSS bawaan Streamlit yang khusus menumpuk
+               elemen [data-testid="column"] di layar sempit — karena kita
+               sudah sama sekali tidak memakai elemen "column". */
+            .st-key-top_actions[data-testid="stVerticalBlock"],
+            .st-key-top_actions div[data-testid="stVerticalBlock"],
+            div[data-testid="stVerticalBlock"].st-key-top_actions,
+            html body div[class*="st-key-top_actions"],
+            .st-key-top_actions.st-key-top_actions div[data-testid="stVerticalBlock"],
+            div[data-testid="stVerticalBlock"].st-key-top_actions.st-key-top_actions {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                justify-content: flex-end !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+            .st-key-top_actions div[data-testid="stElementContainer"],
+            .st-key-top_actions div.element-container {
+                flex: 0 0 auto !important;
+                width: auto !important;
+                min-width: 0 !important;
+            }
+            /* Tombol ikon di pojok atas (pengganti sidebar) — lebar tetap
+               supaya tidak melebar mengikuti kolom Streamlit. */
+            .st-key-top_actions button,
+            .st-key-top_actions div[data-testid="stPopover"] button {
+                border-radius: 12px !important;
+                height: 3.1rem !important;
+                width: 3.2rem !important;
+                min-width: 3.2rem !important;
+                padding: 0 !important;
+                font-size: 1.1rem !important;
+                white-space: nowrap !important;
+            }
+
+            /* ── Baris tombol contoh pertanyaan (di bawah app-hero) ───────
+               Desktop: 2 kolom berdampingan (default st.columns(2)).
+               Mobile: dipaksa 1 kolom/bertumpuk lewat media query di
+               bawah, supaya teks pertanyaan yang panjang tidak memaksa
+               tombol melebar dan bikin layar bisa discroll ke kanan. */
+            .st-key-example_questions div[data-testid="stHorizontalBlock"] {
+                flex-wrap: nowrap !important;
+                gap: 0.6rem !important;
+            }
+            .st-key-example_questions div[data-testid="column"] {
+                min-width: 0 !important;
+            }
             .example-chip button {
                 width: 100%;
                 border-radius: 20px !important;
@@ -947,10 +917,28 @@ def local_css():
                 color: #145A32 !important;
                 font-size: 0.85rem !important;
                 padding: 6px 14px !important;
+                white-space: normal !important;
+                word-break: break-word !important;
             }
             .example-chip button:hover {
                 background-color: #D5F5E3 !important;
                 border-color: #1E8449 !important;
+            }
+
+            /* ══════════════════════ MOBILE (≤640px) ══════════════════════ */
+            @media (max-width: 640px) {
+                /* Tombol atas TETAP di kanan (sama seperti desktop) — tidak
+                   ada perubahan layout khusus untuk .st-key-top_actions di sini. */
+
+                /* Tombol contoh pertanyaan: 1 kolom, bertumpuk ke bawah. */
+                .st-key-example_questions div[data-testid="stHorizontalBlock"] {
+                    flex-direction: column !important;
+                    flex-wrap: wrap !important;
+                }
+                .st-key-example_questions div[data-testid="column"] {
+                    width: 100% !important;
+                    flex: 1 1 100% !important;
+                }
             }
 
             .disclaimer-box {
@@ -982,9 +970,16 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
             # ── Retrieval + Reranking v2 (selaras generate_ragas_dataset.py) ──
             _, context_string = retrieve_and_rerank(prompt, hybrid_retriever, reranker)
 
+            # Hitung riwayat obrolan LEBIH DULU — dipakai untuk menentukan
+            # apakah pertanyaan ini boleh masuk SHARED cache (tanpa histori)
+            # atau harus tetap per-sesi (ada histori). Lihat catatan di
+            # bagian "EFISIENSI 1: RESPONSE CACHE — DUA TINGKAT" di atas.
+            langchain_history = build_history(st.session_state.messages)
+            has_history = bool(langchain_history)
+
             # EFISIENSI 1: Cek cache dulu sebelum panggil API
-            cache_key = get_cache_key(prompt, context_string)
-            cached = get_cached_response(cache_key)
+            cache_key = get_cache_key(prompt, context_string, has_history)
+            cached = get_cached_response(cache_key, has_history)
 
         if cached:
             full_response = cached
@@ -992,7 +987,6 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
             increment_usage("cache")
             model_used = "Cache"
         else:
-            langchain_history = build_history(st.session_state.messages)
             prompt_template = get_chat_prompt_template()
             payload = {
                 "context": context_string,
@@ -1027,13 +1021,13 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
                     model_used = "Error"
 
             if full_response and "seluruh kuota API" not in full_response:
-                set_cached_response(cache_key, full_response)
+                set_cached_response(cache_key, full_response, has_history)
 
         message_placeholder.markdown(full_response)
 
-        if st.session_state.get("show_context"):
-            with st.expander("📄 Lihat pasal yang dirujuk AI", expanded=False):
-                st.markdown(f"```\n{context_string}\n```")
+        # Pasal rujukan SELALU ditampilkan (tidak ada lagi opsi untuk menyembunyikan).
+        with st.expander("📄 Lihat pasal yang dirujuk AI", expanded=False):
+            st.markdown(f"```\n{context_string}\n```")
 
         st.session_state.messages.append({
             "role": "assistant",
@@ -1065,17 +1059,9 @@ def main():
     st.set_page_config(
         page_title="Asisten Warga Desa Tieng",
         page_icon="♻️",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",
     )
     local_css()
-
-    st.markdown("""
-        <div class="app-hero">
-            <h1>♻️ Asisten Warga Desa Tieng</h1>
-            <p>Tanya apa saja seputar aturan pengelolaan sampah dan bank sampah desa.
-            Jawaban diambil langsung dari Peraturan Desa Tieng No. 02 Tahun 2024.</p>
-        </div>
-    """, unsafe_allow_html=True)
 
     api_keys = load_api_keys()
     if not api_keys:
@@ -1097,25 +1083,79 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
+    # ── Baris tombol: New chat / Unduh PDF / Tentang ───────────────────
+    # (menggantikan sidebar — ditaruh DI ATAS banner hero)
+    # PENTING: sengaja TIDAK memakai st.columns() di sini. Streamlit punya
+    # CSS bawaan yang memaksa elemen [data-testid="column"] menumpuk penuh
+    # (width 100%) di layar sempit, dan itu kadang mengalahkan override kita
+    # sehingga urutan/lebar tombol jadi berantakan di mobile. Dengan menaruh
+    # 3 widget berurutan (tanpa columns) lalu memaksa flex-row lewat CSS pada
+    # container-nya (.st-key-top_actions di local_css), kita menghindari
+    # aturan responsif bawaan tsb sepenuhnya.
+    with st.container(key="top_actions"):
+        if st.button("🆕", help="Mulai percakapan baru", use_container_width=True):
+            st.session_state.messages = []
+            # Tidak perlu st.rerun() manual — klik tombol sudah otomatis
+            # memicu rerun. Memanggilnya lagi di sini menyebabkan DOUBLE
+            # rerun yang membuat elemen lama (jawaban/disclaimer) tertinggal
+            # di tampilan — itulah sumber bug tampilan sebelumnya.
+        if st.session_state.messages:
+            pdf_bytes = generate_chat_pdf(st.session_state.messages)
+            st.download_button(
+                "📥", data=pdf_bytes,
+                file_name=f"riwayat_chatbot_tieng_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                mime="application/pdf",
+                help="Unduh percakapan (PDF)",
+                use_container_width=True,
+            )
+        else:
+            st.button("📥", help="Belum ada percakapan untuk diunduh", disabled=True, use_container_width=True)
+        about_container = st.popover("❓", use_container_width=True) if hasattr(st, "popover") \
+            else st.expander("❓ Tentang", expanded=False)
+        with about_container:
+            st.markdown("""
+            **Tentang chatbot ini**
+
+            Chatbot ini membantu warga Desa Tieng mencari informasi seputar
+            **Peraturan Desa No. 02 Tahun 2024 tentang Pengelolaan Sampah**,
+            termasuk aturan pemilahan sampah, sanksi, dan bank sampah.
+
+            Setiap jawaban selalu menyertakan **rujukan pasal** agar mudah
+            diverifikasi. Jika ada yang kurang jelas, silakan hubungi kantor
+            Desa Tieng secara langsung.
+            """)
+
+    st.markdown("""
+        <div class="app-hero">
+            <h1>♻️ Asisten Warga Desa Tieng</h1>
+            <p>Tanya apa saja seputar aturan pengelolaan sampah dan bank sampah desa.
+            Jawaban diambil langsung dari Peraturan Desa Tieng No. 02 Tahun 2024.</p>
+        </div>
+    """, unsafe_allow_html=True)
+
     # ── Sambutan + contoh pertanyaan (hanya saat belum ada obrolan) ────
     if not st.session_state.messages:
         st.markdown("**👋 Belum tahu mau tanya apa? Coba salah satu ini:**")
-        cols = st.columns(2)
-        for i, contoh in enumerate(CONTOH_PERTANYAAN):
-            with cols[i % 2]:
-                st.markdown('<div class="example-chip">', unsafe_allow_html=True)
-                if st.button(contoh, key=f"contoh_{i}", use_container_width=True):
-                    st.session_state["queued_prompt"] = contoh
-                st.markdown('</div>', unsafe_allow_html=True)
+        # Dibungkus st.container(key=...) supaya baris ini bisa ditarget
+        # CSS terpisah dari baris tombol atas (lihat .st-key-example_questions
+        # di local_css): 2 kolom di desktop, 1 kolom (bertumpuk) di mobile.
+        with st.container(key="example_questions"):
+            cols = st.columns(2)
+            for i, contoh in enumerate(CONTOH_PERTANYAAN):
+                with cols[i % 2]:
+                    st.markdown('<div class="example-chip">', unsafe_allow_html=True)
+                    if st.button(contoh, key=f"contoh_{i}", use_container_width=True):
+                        st.session_state["queued_prompt"] = contoh
+                    st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("")
 
     # ── Riwayat obrolan ─────────────────────────────────────────────
+    # Pasal rujukan SELALU ditampilkan di setiap jawaban (tidak ada lagi
+    # opsi untuk menyembunyikannya).
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-            if (message["role"] == "assistant"
-                    and message.get("context_retrieved")
-                    and st.session_state.get("show_context")):
+            if message["role"] == "assistant" and message.get("context_retrieved"):
                 with st.expander("📄 Lihat pasal yang dirujuk AI", expanded=False):
                     st.markdown(f"```\n{message['context_retrieved']}\n```")
 
@@ -1133,105 +1173,6 @@ def main():
         'resmi/hukum, mohon konfirmasi ke perangkat Desa Tieng.</div>',
         unsafe_allow_html=True,
     )
-
-    # ── SIDEBAR ───────────────────────────────────────────────────────
-    with st.sidebar:
-        st.markdown("### ♻️ Menu")
-
-        if st.button("🆕 Mulai Percakapan Baru", use_container_width=True):
-            st.session_state.messages = []
-            st.rerun()
-
-        if st.session_state.messages:
-            pdf_bytes = generate_chat_pdf(st.session_state.messages)
-            st.download_button(
-                label="📥 Simpan Percakapan (PDF)",
-                data=pdf_bytes,
-                file_name=f"riwayat_chatbot_tieng_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
-
-        st.markdown("---")
-
-        with st.expander("❓ Tentang chatbot ini"):
-            st.markdown("""
-            Chatbot ini membantu warga Desa Tieng mencari informasi seputar
-            **Peraturan Desa No. 02 Tahun 2024 tentang Pengelolaan Sampah**,
-            termasuk aturan pemilahan sampah, sanksi, dan bank sampah.
-
-            Setiap jawaban diusahakan menyertakan **rujukan pasal** agar
-            mudah diverifikasi. Jika ada yang kurang jelas, silakan
-            hubungi kantor Desa Tieng secara langsung.
-            """)
-
-        st.session_state["show_context"] = st.toggle(
-            "Tampilkan pasal rujukan di setiap jawaban",
-            value=st.session_state.get("show_context", False),
-            help="Aktifkan untuk melihat potongan teks peraturan yang dipakai AI menyusun jawaban."
-        )
-
-        st.markdown("---")
-
-        with st.expander("🛠️ Info teknis (untuk admin)"):
-            key_states = st.session_state.get("key_states", [])
-            cache_hits = st.session_state.get("usage_cache_hit", 0)
-            n_keys = len(api_keys)
-
-            total_lite_limit = MODEL_LIMITS["lite"]["rpd"] * n_keys
-            total_flash_limit = MODEL_LIMITS["flash"]["rpd"] * n_keys
-            total_lite_used = sum(s["lite_used"] for s in key_states)
-            total_flash_used = sum(s["flash_used"] for s in key_states)
-
-            st.markdown(f"**{n_keys} API key terpasang** — rotasi otomatis saat kuota habis.")
-            st.markdown("**Total kuota gabungan hari ini**")
-            st.markdown(f"""
-            ⚡ Flash-Lite — {total_lite_used}/{total_lite_limit} RPD
-            🚨 Flash — {total_flash_used}/{total_flash_limit} RPD
-            💾 Cache hit — {cache_hits} (0 RPD terpakai)
-            """)
-
-            st.markdown("**Detail per API key**")
-            active_idx = st.session_state.get("active_key_idx", 0)
-            for i, s in enumerate(key_states):
-                lite_habis = s["lite_exhausted"] or s["lite_used"] >= MODEL_LIMITS["lite"]["rpd"]
-                flash_habis = s["flash_exhausted"] or s["flash_used"] >= MODEL_LIMITS["flash"]["rpd"]
-                lite_dot = "🔴" if lite_habis else "🟢"
-                flash_dot = "🔴" if flash_habis else "🟢"
-                aktif = " 👈 *sedang dipakai*" if i == active_idx else ""
-                st.markdown(
-                    f"- **Key #{i + 1}**{aktif} — "
-                    f"Lite {lite_dot} {s['lite_used']}/{MODEL_LIMITS['lite']['rpd']} · "
-                    f"Flash {flash_dot} {s['flash_used']}/{MODEL_LIMITS['flash']['rpd']}"
-                )
-
-            col_a, col_b = st.columns(2)
-            with col_a:
-                if st.button("🔄 Reset cache"):
-                    st.session_state["response_cache"] = {}
-                    st.success("Cache jawaban direset.")
-            with col_b:
-                if st.button("🔓 Reset status key"):
-                    for s in key_states:
-                        s["lite_exhausted"] = False
-                        s["flash_exhausted"] = False
-                    st.success("Status 'habis' pada semua key direset.")
-
-            st.markdown("---")
-            st.markdown("**Konfigurasi RAG aktif** (selaras `generate_ragas_dataset.py`)")
-            st.markdown(f"""
-            - Chunking v2: BAB 1 per-definisi, ayat panjang per-grup huruf
-            - top_k_retrieval: {RAG_CONFIG['top_k_retrieval']}
-            - top_n_rerank: {RAG_CONFIG['top_n_rerank']}
-            - rerank_threshold: {RAG_CONFIG['rerank_threshold']}
-            - max_context_chars: {RAG_CONFIG['max_context_chars']}
-            - Hybrid FAISS (60%) + BM25 (40%)
-            - CrossEncoder reranker + boost definisi
-            - Dedup chunk + smart truncate
-            - Auto-glosarium istilah sampah (organik/anorganik/residu/dll.)
-            - Flash-Lite first, Flash darurat, response cache
-            - Rotasi otomatis {n_keys} API key saat kuota habis
-            """)
 
 
 if __name__ == "__main__":
