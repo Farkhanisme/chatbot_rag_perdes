@@ -34,14 +34,7 @@ load_dotenv()
 
 # ================================================================
 # BATAS FREE TIER (PER JUNI 2026) — PER API KEY
-# ┌──────────────────────┬──────┬────────┬──────────┬────────────┐
-# │ Model                │ RPM  │ RPD    │ TPM      │ Prioritas  │
-# ├──────────────────────┼──────┼────────┼──────────┼────────────┤
-# │ gemini-2.5-flash-lite│  15  │ 1.000  │ 250.000  │ UTAMA ✅   │
-# │ gemini-2.5-flash     │  10  │    20  │ 250.000  │ DARURAT ⚠️ │
-# └──────────────────────┴──────┴────────┴──────────┴────────────┘
 # ================================================================
-
 class HybridRetriever:
     def __init__(self, retrievers: list, weights: list, c: int = 60):
         self.retrievers = retrievers
@@ -647,75 +640,61 @@ def local_css():
 
 
 def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]):
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        context_string = ""
-        model_used = ""
+    # Bagian expander rujukan pasal telah sepenuhnya dihapus dari fungsi ini
+    full_response = ""
+    context_string = ""
+    model_used = ""
 
-        with st.spinner("Mencari jawaban di Peraturan Desa..."):
-            _, context_string = retrieve_and_rerank(prompt, hybrid_retriever, reranker)
-            langchain_history = build_history(st.session_state.messages)
-            has_history = bool(langchain_history)
+    with st.spinner("Mencari jawaban di Peraturan Desa..."):
+        _, context_string = retrieve_and_rerank(prompt, hybrid_retriever, reranker)
+        langchain_history = build_history(st.session_state.messages)
+        has_history = bool(langchain_history)
+        cache_key = get_cache_key(prompt, context_string, has_history)
+        cached = get_cached_response(cache_key, has_history)
 
-            cache_key = get_cache_key(prompt, context_string, has_history)
-            cached = get_cached_response(cache_key, has_history)
+    if cached:
+        full_response = cached
+        increment_usage("cache")
+        model_used = "Cache"
+    else:
+        prompt_template = get_chat_prompt_template()
+        payload = {
+            "context": context_string,
+            "chat_history": langchain_history,
+            "question": prompt
+        }
+        start_idx = st.session_state.get("active_key_idx", 0)
 
-        if cached:
-            full_response = cached
-            message_placeholder.markdown(full_response)
-            increment_usage("cache")
-            model_used = "Cache"
-        else:
-            prompt_template = get_chat_prompt_template()
-            payload = {
-                "context": context_string,
-                "chat_history": langchain_history,
-                "question": prompt
-            }
-            start_idx = st.session_state.get("active_key_idx", 0)
-
+        try:
+            with st.spinner("Menyusun jawaban..."):
+                full_response, used_idx = call_model_tier(
+                    prompt_template, payload, api_keys, "lite", start_idx
+                    )
+            model_used = f"Flash-Lite (key #{used_idx + 1})"
+        except Exception:
             try:
-                with st.spinner("Menyusun jawaban..."):
+                with st.spinner("Mencoba model cadangan..."):
                     full_response, used_idx = call_model_tier(
-                        prompt_template, payload, api_keys, "lite", start_idx
+                        prompt_template, payload, api_keys, "flash", start_idx
                     )
-                model_used = f"Flash-Lite (key #{used_idx + 1})"
+                model_used = f"Flash (key #{used_idx + 1})"
             except Exception:
-                try:
-                    with st.spinner("Mencoba model cadangan..."):
-                        full_response, used_idx = call_model_tier(
-                            prompt_template, payload, api_keys, "flash", start_idx
-                        )
-                    model_used = f"Flash (key #{used_idx + 1})"
-                except Exception:
-                    full_response = (
-                        "Mohon maaf, seluruh kuota API hari ini sudah habis di "
-                        f"ke-{len(api_keys)} key yang tersedia. Silakan coba lagi "
-                        "besok, atau hubungi perangkat Desa Tieng untuk bantuan langsung."
-                    )
-                    model_used = "Error"
+                full_response = (
+                    "Mohon maaf, seluruh kuota API hari ini sudah habis di "
+                    f"ke-{len(api_keys)} key yang tersedia. Silakan coba lagi "
+                    "besok, atau hubungi perangkat Desa Tieng untuk bantuan langsung."
+                )
+                model_used = "Error"
 
-            if full_response and "seluruh kuota API" not in full_response:
-                set_cached_response(cache_key, full_response, has_history)
+        if full_response and "seluruh kuota API" not in full_response:
+            set_cached_response(cache_key, full_response, has_history)
 
-        message_placeholder.markdown(full_response)
-        
-        # --- BAGIAN EXPANDER PASAL DIHAPUS DARI SINI ---
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": full_response,
-            "context_retrieved": context_string,
-            "model_used": model_used
-        })
-
-
-def handle_prompt(prompt: str, hybrid_retriever, reranker, api_keys: list[str]):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    answer_question(prompt, hybrid_retriever, reranker, api_keys)
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": full_response,
+        "context_retrieved": context_string,
+        "model_used": model_used
+    })
 
 
 CONTOH_PERTANYAAN = [
@@ -755,6 +734,7 @@ def main():
     with st.container(key="top_actions"):
         if st.button("🆕", help="Mulai percakapan baru", use_container_width=True):
             st.session_state.messages = []
+            st.rerun()
         if st.session_state.messages:
             pdf_bytes = generate_chat_pdf(st.session_state.messages)
             st.download_button(
@@ -784,14 +764,21 @@ def main():
         </div>
     """, unsafe_allow_html=True)
 
-    # ── Input baru: deteksi chat_input atau pemicu tombol contoh ──
+    # ── Logika Menangkap Input Pengguna Sebelum Me-render Tampilan ──
     typed_prompt = st.chat_input("Tulis pertanyaan Anda di sini, mis. \"Apa itu bank sampah?\"")
     queued_prompt = st.session_state.pop("queued_prompt", None)
-    prompt = typed_prompt or queued_prompt
+    current_prompt = typed_prompt or queued_prompt
 
-    # ── Sambutan + contoh pertanyaan ──
-    # Ditambahkan pengecekan 'and not queued_prompt' agar tombol langsung hilang begitu diklik
-    if not st.session_state.messages and not queued_prompt:
+    # Jika ada pertanyaan baru masuk, simpan langsung ke state messages dan panggil API
+    if current_prompt:
+        st.session_state.messages.append({"role": "user", "content": current_prompt})
+        answer_question(current_prompt, hybrid_retriever, reranker, api_keys)
+        st.rerun()
+
+    # ── Menampilkan Tombol Pilihan Pertanyaan ──
+    # Tombol HANYA muncul jika riwayat kosong DAN tidak ada prompt aktif yang sedang diproses.
+    # Ketika pengguna bertanya pertama kali atau tombol diklik, kondisi ini langsung terpenuhi untuk menyembunyikan chip contoh.
+    if not st.session_state.messages and not current_prompt:
         st.markdown("**👋 Belum tahu mau tanya apa? Coba salah satu ini:**")
         with st.container(key="example_questions"):
             cols = st.columns(2)
@@ -804,14 +791,13 @@ def main():
                     st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("")
 
-    # ── Riwayat obrolan (Expander pasal rujukan sudah dihapus dari sini) ──
+    # ── Merender Seluruh Riwayat Obrolan Sesuai Urutan Kronologis ──
+    # Expander "Lihat pasal yang dirujuk" telah dihapus sepenuhnya di sini
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt:
-        handle_prompt(prompt, hybrid_retriever, reranker, api_keys)
-
+    # Disclaimer diletakkan paling bawah secara konsisten satu kali saja
     st.markdown(
         '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
         'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
