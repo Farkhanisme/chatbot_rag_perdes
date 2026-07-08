@@ -549,6 +549,51 @@ agar mudah dibaca. Selesaikan kalimat terakhir hingga tanda titik.
     ])
 
 
+def get_condense_prompt_template():
+    return ChatPromptTemplate.from_messages([
+        ("system", """Tugas Anda HANYA mengubah pertanyaan lanjutan warga menjadi pertanyaan \
+MANDIRI (standalone) yang jelas, berdasarkan riwayat percakapan, sehingga bisa langsung \
+dicari di dokumen Peraturan Desa TANPA butuh konteks tambahan.
+
+ATURAN:
+- Jika pertanyaan baru sudah jelas berdiri sendiri (sudah menyebutkan topik/pasal/istilah \
+secara eksplisit), kembalikan PERSIS APA ADANYA tanpa perubahan.
+- Jika pertanyaan baru memakai kata rujukan seperti "itu", "-nya", "tadi", "pasalnya", \
+"yang tadi", dsb yang merujuk sesuatu di riwayat percakapan, GANTI kata rujukan tersebut \
+dengan hal spesifik yang dimaksud (contoh: nomor pasal, nama istilah, topik yang dibahas).
+- HANYA kembalikan satu kalimat pertanyaan hasil olahan. JANGAN beri penjelasan, JANGAN \
+beri tanda kutip, JANGAN beri awalan seperti "Pertanyaan mandiri:"."""),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "Pertanyaan baru: {question}\n\nPertanyaan mandiri:")
+    ])
+
+
+def condense_question(question: str, langchain_history: list, api_keys: list[str]) -> str:
+    """Menulis ulang pertanyaan lanjutan yang ambigu (mis. mengandung 'pasalnya',
+    'itu', 'tadi') menjadi pertanyaan mandiri berdasarkan riwayat percakapan,
+    supaya tahap retrieval (pencarian dokumen) tidak salah/gagal menemukan
+    pasal yang sebenarnya sudah relevan dari percakapan sebelumnya.
+    Jika gagal karena alasan apapun, kembalikan pertanyaan asli (fail-safe)."""
+    if not langchain_history or not api_keys:
+        return question
+    try:
+        idx = st.session_state.get("active_key_idx", 0) % len(api_keys)
+        model = ChatGoogleGenerativeAI(
+            model=MODEL_LIMITS["lite"]["name"],
+            temperature=0.0,
+            max_output_tokens=80,
+            google_api_key=api_keys[idx],
+        )
+        chain = get_condense_prompt_template() | model | StrOutputParser()
+        rewritten = chain.invoke({
+            "chat_history": langchain_history,
+            "question": question
+        }).strip().strip('"').strip()
+        return rewritten if rewritten else question
+    except Exception:
+        return question
+
+
 def local_css():
     st.markdown("""
         <style>
@@ -660,9 +705,20 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
             model_used = ""
 
             with st.spinner("Mencari jawaban di Peraturan Desa..."):
-                _, context_string = retrieve_and_rerank(prompt, hybrid_retriever, reranker)
                 langchain_history = build_history(st.session_state.messages)
                 has_history = bool(langchain_history)
+
+                # Untuk pertanyaan lanjutan yang ambigu (mis. "apa saja isi
+                # pasalnya"), tulis ulang dulu jadi pertanyaan mandiri (mis.
+                # "apa isi Pasal 12") berdasarkan riwayat percakapan, SEBELUM
+                # dicari ke FAISS/BM25 — supaya pencarian dokumen tidak gagal
+                # hanya karena pertanyaannya tidak eksplisit menyebut topiknya.
+                retrieval_query = (
+                    condense_question(prompt, langchain_history, api_keys)
+                    if has_history else prompt
+                )
+
+                _, context_string = retrieve_and_rerank(retrieval_query, hybrid_retriever, reranker)
 
                 cache_key = get_cache_key(prompt, context_string, has_history)
                 cached = get_cached_response(cache_key, has_history)
