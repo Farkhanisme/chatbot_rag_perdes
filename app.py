@@ -634,6 +634,7 @@ def local_css():
                 font-size: 0.82rem;
                 color: #7D6608;
                 margin-top: 10px;
+                margin-bottom: 10px;
             }
         </style>
     """, unsafe_allow_html=True)
