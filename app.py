@@ -32,9 +32,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# ================================================================
-# BATAS FREE TIER (PER JUNI 2026) — PER API KEY
-# ================================================================
 class HybridRetriever:
     def __init__(self, retrievers: list, weights: list, c: int = 60):
         self.retrievers = retrievers
@@ -54,7 +51,6 @@ class HybridRetriever:
 def split_large_pasal(pasal_chunk: str, max_len: int = 1200) -> list[str]:
     if len(pasal_chunk) <= max_len:
         return [pasal_chunk]
-
     lines = pasal_chunk.split("\n")
     header_lines = []
     i = 0
@@ -63,13 +59,10 @@ def split_large_pasal(pasal_chunk: str, max_len: int = 1200) -> list[str]:
         i += 1
     header = "\n".join(header_lines).strip()
     body = "\n".join(lines[i:])
-
     if not body.strip():
         return [pasal_chunk]
-
     segments = re.split(r'\n(?=\* )', body)
     segments = [s.strip() for s in segments if s.strip()]
-
     return [f"{header}\n{seg}" for seg in segments]
 
 
@@ -77,24 +70,19 @@ def build_chunks_from_text(raw_text: str, pasal_split_threshold: int = 1200) -> 
     parts = re.split(r'\n(?=###\s+Pasal)', raw_text)
     chunks = []
     current_bab = "KETENTUAN UMUM"
-
     for part in parts:
         part = part.strip()
         if not part:
             continue
-
         bab_match = re.search(r'\n##\s+(BAB\s+[^\n]+)', "\n" + part)
         next_bab = None
         if bab_match:
             part = part[:bab_match.start()].strip()
             next_bab = bab_match.group(1).strip()
-
         full_chunk = f"[{current_bab}]\n{part}"
         chunks.extend(split_large_pasal(full_chunk, max_len=pasal_split_threshold))
-
         if next_bab:
             current_bab = next_bab
-
     return [c for c in chunks if len(c.strip()) > 10]
 
 
@@ -104,10 +92,8 @@ def get_resources():
         model_name="BAAI/bge-m3",
         encode_kwargs={"normalize_embeddings": True}
     )
-
     file_path = "perdes_sampah_optimize.txt"
     chunks = []
-
     if not os.path.exists("faiss_index"):
         if not os.path.exists(file_path):
             return None, None, None
@@ -126,21 +112,12 @@ def get_resources():
             with open(file_path, "r", encoding="utf-8") as f:
                 raw_text = f.read()
             chunks = build_chunks_from_text(raw_text, pasal_split_threshold=RAG_CONFIG["pasal_split_threshold"])
-
     vector_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-
     documents = [Document(page_content=c) for c in chunks]
     bm25_retriever = BM25Retriever.from_documents(documents)
     bm25_retriever.k = RAG_CONFIG["top_k_retrieval"]
-
-    faiss_retriever = vector_db.as_retriever(
-        search_kwargs={"k": RAG_CONFIG["top_k_retrieval"]}
-    )
-    hybrid_retriever = HybridRetriever(
-        retrievers=[faiss_retriever, bm25_retriever],
-        weights=[0.6, 0.4]
-    )
-
+    faiss_retriever = vector_db.as_retriever(search_kwargs={"k": RAG_CONFIG["top_k_retrieval"]})
+    hybrid_retriever = HybridRetriever(retrievers=[faiss_retriever, bm25_retriever], weights=[0.6, 0.4])
     return embeddings, vector_db, hybrid_retriever
 
 
@@ -176,26 +153,20 @@ def retrieve_and_rerank(question: str, hybrid_retriever, reranker: CrossEncoder)
     candidate_docs = hybrid_retriever.invoke(question)
     if not candidate_docs:
         return [], ""
-
     candidate_docs = _deduplicate_chunks(candidate_docs)
-
     pairs = [(question, doc.page_content) for doc in candidate_docs]
     scores = reranker.predict(pairs)
-
     threshold = RAG_CONFIG["rerank_threshold"]
     scored_docs = [(s, d) for s, d in zip(scores, candidate_docs) if s >= threshold]
-
     if not scored_docs:
         ranked = sorted(zip(scores, candidate_docs), key=lambda x: x[0], reverse=True)
         top_docs = [d for _, d in ranked[:3]]
     else:
         ranked = sorted(scored_docs, key=lambda x: x[0], reverse=True)
         top_docs = [d for _, d in ranked[:RAG_CONFIG["top_n_rerank"]]]
-
     contexts = [doc.page_content for doc in top_docs]
     context_str = "\n\n---\n\n".join(contexts)
     context_str = _smart_truncate(context_str, RAG_CONFIG["max_context_chars"])
-
     return contexts, context_str
 
 
@@ -268,17 +239,14 @@ def load_api_keys() -> list[str]:
         k = os.getenv(env_name) or _get_secret(env_name)
         if k and k.strip():
             keys.append(k.strip())
-
     if not keys:
         raw = os.getenv("GOOGLE_API_KEYS") or _get_secret("GOOGLE_API_KEYS")
         if raw:
             keys = [k.strip() for k in raw.split(",") if k.strip()]
-
     if not keys:
         single = os.getenv("GOOGLE_API_KEY") or _get_secret("GOOGLE_API_KEY")
         if single and single.strip():
             keys = [single.strip()]
-
     return keys
 
 
@@ -331,11 +299,9 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
             increment_usage(model_type, idx)
             st.session_state["active_key_idx"] = idx
             return result, idx
-
         except Exception as e:
             err_str = str(e)
             kind = _classify_rate_limit(err_str)
-
             if kind == "minute":
                 wait = _parse_retry_delay(err_str) or 15
                 st.info(f"⏳ API key #{idx + 1} kena limit per-menit, tunggu {wait}s ...")
@@ -349,17 +315,13 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
                     mark_key_exhausted(idx, model_type)
                     last_err = e2
                     continue
-
             elif kind in ("day", "unknown"):
                 mark_key_exhausted(idx, model_type)
                 last_err = e
                 continue
             else:
                 raise
-
-    raise RuntimeError(
-        f"Semua {n} API key kehabisan kuota / gagal untuk model {model_type}."
-    ) from last_err
+    raise RuntimeError(f"Semua {n} API key kehabisan kuota / gagal untuk model {model_type}.") from last_err
 
 
 def init_usage_tracker(num_keys: int):
@@ -404,48 +366,21 @@ def is_key_available(key_idx: int, model_type: str) -> bool:
 def generate_chat_pdf(messages: list) -> bytes:
     buffer = BytesIO()
     doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        leftMargin=2 * cm,
-        rightMargin=2 * cm,
-        topMargin=2 * cm,
-        bottomMargin=2 * cm,
-        title="Riwayat Percakapan Chatbot Desa Tieng",
-        author="Chatbot Perdes Tieng",
+        buffer, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm,
+        title="Riwayat Percakapan Chatbot Desa Tieng", author="Chatbot Perdes Tieng",
     )
-
     styles = getSampleStyleSheet()
     style_title = ParagraphStyle(
-        "ChatTitle", parent=styles["Title"], fontSize=16,
-        textColor=colors.HexColor("#1F4E79"), spaceAfter=4, alignment=TA_CENTER, fontName="Helvetica-Bold",
+        "ChatTitle", parent=styles["Title"], fontSize=16, textColor=colors.HexColor("#1F4E79"),
+        spaceAfter=4, alignment=TA_CENTER, fontName="Helvetica-Bold",
     )
-    style_subtitle = ParagraphStyle(
-        "ChatSubtitle", parent=styles["Normal"], fontSize=9,
-        textColor=colors.HexColor("#555555"), spaceAfter=2, alignment=TA_CENTER,
-    )
-    style_meta = ParagraphStyle(
-        "ChatMeta", parent=styles["Normal"], fontSize=8,
-        textColor=colors.HexColor("#888888"), spaceAfter=16, alignment=TA_CENTER,
-    )
-    style_label_user = ParagraphStyle(
-        "LabelUser", parent=styles["Normal"], fontSize=8,
-        textColor=colors.HexColor("#1A5276"), fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=2,
-    )
-    style_label_bot = ParagraphStyle(
-        "LabelBot", parent=styles["Normal"], fontSize=8,
-        textColor=colors.HexColor("#1E8449"), fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=2,
-    )
-    style_bubble_user = ParagraphStyle(
-        "BubbleUser", parent=styles["Normal"], fontSize=10,
-        textColor=colors.HexColor("#1A1A1A"), leading=14, alignment=TA_LEFT,
-    )
-    style_bubble_bot = ParagraphStyle(
-        "BubbleBot", parent=styles["Normal"], fontSize=10,
-        textColor=colors.HexColor("#1A1A1A"), leading=14, alignment=TA_JUSTIFY,
-    )
-    style_model_tag = ParagraphStyle(
-        "ModelTag", parent=styles["Normal"], fontSize=7, textColor=colors.HexColor("#999999"), spaceAfter=2,
-    )
+    style_subtitle = ParagraphStyle("ChatSubtitle", parent=styles["Normal"], fontSize=9, textColor=colors.HexColor("#555555"), spaceAfter=2, alignment=TA_CENTER)
+    style_meta = ParagraphStyle("ChatMeta", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#888888"), spaceAfter=16, alignment=TA_CENTER)
+    style_label_user = ParagraphStyle("LabelUser", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#1A5276"), fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=2)
+    style_label_bot = ParagraphStyle("LabelBot", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#1E8449"), fontName="Helvetica-Bold", spaceBefore=10, spaceAfter=2)
+    style_bubble_user = ParagraphStyle("BubbleUser", parent=styles["Normal"], fontSize=10, textColor=colors.HexColor("#1A1A1A"), leading=14, alignment=TA_LEFT)
+    style_bubble_bot = ParagraphStyle("BubbleBot", parent=styles["Normal"], fontSize=10, textColor=colors.HexColor("#1A1A1A"), leading=14, alignment=TA_JUSTIFY)
+    style_model_tag = ParagraphStyle("ModelTag", parent=styles["Normal"], fontSize=7, textColor=colors.HexColor("#999999"), spaceAfter=2)
 
     story = []
     story.append(Paragraph("Chatbot Peraturan Desa Tieng", style_title))
@@ -461,25 +396,15 @@ def generate_chat_pdf(messages: list) -> bytes:
             role    = msg["role"]
             content = msg.get("content", "").strip()
             model   = msg.get("model_used", "")
-
-            content_safe = (
-                content
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\n", "<br/>")
-            )
+            content_safe = content.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br/>")
 
             if role == "user":
                 story.append(Paragraph(f"Warga #{(i + 1) // 2}", style_label_user))
                 tbl = Table([[Paragraph(content_safe, style_bubble_user)]], colWidths=[doc.width])
                 tbl.setStyle(TableStyle([
                     ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#D6EAF8")),
-                    ("ROUNDEDCORNERS", [6]),
-                    ("TOPPADDING",    (0, 0), (-1, -1), 8),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                    ("LEFTPADDING",   (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+                    ("ROUNDEDCORNERS", [6]), ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                     ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#AED6F1")),
                 ]))
                 story.append(tbl)
@@ -488,11 +413,8 @@ def generate_chat_pdf(messages: list) -> bytes:
                 tbl = Table([[Paragraph(content_safe, style_bubble_bot)]], colWidths=[doc.width])
                 tbl.setStyle(TableStyle([
                     ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#D5F5E3")),
-                    ("ROUNDEDCORNERS", [6]),
-                    ("TOPPADDING",    (0, 0), (-1, -1), 8),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                    ("LEFTPADDING",   (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+                    ("ROUNDEDCORNERS", [6]), ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10),
                     ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#A9DFBF")),
                 ]))
                 story.append(tbl)
@@ -640,18 +562,14 @@ def local_css():
     """, unsafe_allow_html=True)
 
 
-def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]):
-    # Bagian expander rujukan pasal telah sepenuhnya dihapus dari fungsi ini
-    full_response = ""
-    context_string = ""
-    model_used = ""
-
-    with st.spinner("Mencari jawaban di Peraturan Desa..."):
-        _, context_string = retrieve_and_rerank(prompt, hybrid_retriever, reranker)
-        langchain_history = build_history(st.session_state.messages)
-        has_history = bool(langchain_history)
-        cache_key = get_cache_key(prompt, context_string, has_history)
-        cached = get_cached_response(cache_key, has_history)
+def execute_llm_processing(prompt: str, hybrid_retriever, reranker, api_keys: list[str]):
+    """Memproses jawaban LLM di latar belakang dan memasukkannya langsung ke session state."""
+    _, context_string = retrieve_and_rerank(prompt, hybrid_retriever, reranker)
+    langchain_history = build_history(st.session_state.messages)
+    has_history = bool(langchain_history)
+    
+    cache_key = get_cache_key(prompt, context_string, has_history)
+    cached = get_cached_response(cache_key, has_history)
 
     if cached:
         full_response = cached
@@ -667,22 +585,15 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
         start_idx = st.session_state.get("active_key_idx", 0)
 
         try:
-            with st.spinner("Menyusun jawaban..."):
-                full_response, used_idx = call_model_tier(
-                    prompt_template, payload, api_keys, "lite", start_idx
-                    )
+            full_response, used_idx = call_model_tier(prompt_template, payload, api_keys, "lite", start_idx)
             model_used = f"Flash-Lite (key #{used_idx + 1})"
         except Exception:
             try:
-                with st.spinner("Mencoba model cadangan..."):
-                    full_response, used_idx = call_model_tier(
-                        prompt_template, payload, api_keys, "flash", start_idx
-                    )
+                full_response, used_idx = call_model_tier(prompt_template, payload, api_keys, "flash", start_idx)
                 model_used = f"Flash (key #{used_idx + 1})"
             except Exception:
                 full_response = (
-                    "Mohon maaf, seluruh kuota API hari ini sudah habis di "
-                    f"ke-{len(api_keys)} key yang tersedia. Silakan coba lagi "
+                    "Mohon maaf, seluruh kuota API hari ini sudah habis. Silakan coba lagi "
                     "besok, atau hubungi perangkat Desa Tieng untuk bantuan langsung."
                 )
                 model_used = "Error"
@@ -731,7 +642,18 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # ── Baris tombol atas ──
+    # ── 1. intercept input di paling atas ──
+    typed_prompt = st.chat_input("Tulis pertanyaan Anda di sini, mis. \"Apa itu bank sampah?\"")
+    queued_prompt = st.session_state.pop("queued_prompt", None)
+    prompt = typed_prompt or queued_prompt
+
+    if prompt:
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.spinner("Mencari jawaban di Peraturan Desa..."):
+            execute_llm_processing(prompt, hybrid_retriever, reranker, api_keys)
+        st.rerun()
+
+    # ── 2. render elemen top UI bar ──
     with st.container(key="top_actions"):
         if st.button("🆕", help="Mulai percakapan baru", use_container_width=True):
             st.session_state.messages = []
@@ -741,21 +663,14 @@ def main():
             st.download_button(
                 "📥", data=pdf_bytes,
                 file_name=f"riwayat_chatbot_tieng_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                mime="application/pdf",
-                help="Unduh percakapan (PDF)",
-                use_container_width=True,
+                mime="application/pdf", help="Unduh percakapan (PDF)", use_container_width=True,
             )
         else:
             st.button("📥", help="Belum ada percakapan untuk diunduh", disabled=True, use_container_width=True)
         
         about_container = st.popover("❓", use_container_width=True) if hasattr(st, "popover") else st.expander("❓ Tentang", expanded=False)
         with about_container:
-            st.markdown("""
-            **Tentang chatbot ini**
-
-            Chatbot ini membantu warga Desa Tieng mencari informasi seputar
-            **Peraturan Desa No. 02 Tahun 2024 tentang Pengelolaan Sampah**.
-            """)
+            st.markdown("**Tentang chatbot ini**\n\nChatbot ini membantu warga Desa Tieng mencari informasi seputar **Peraturan Desa No. 02 Tahun 2024 tentang Pengelolaan Sampah**.")
 
     st.markdown("""
         <div class="app-hero">
@@ -765,7 +680,7 @@ def main():
         </div>
     """, unsafe_allow_html=True)
 
-    # Disclaimer diletakkan paling bawah secara konsisten satu kali saja
+    # ── 5. render alert disclaimer di bagian paling bawah ──
     st.markdown(
         '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
         'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
@@ -773,21 +688,8 @@ def main():
         unsafe_allow_html=True,
     )
 
-    # ── Logika Menangkap Input Pengguna Sebelum Me-render Tampilan ──
-    typed_prompt = st.chat_input("Tulis pertanyaan Anda di sini, mis. \"Apa itu bank sampah?\"")
-    queued_prompt = st.session_state.pop("queued_prompt", None)
-    current_prompt = typed_prompt or queued_prompt
-
-    # Jika ada pertanyaan baru masuk, simpan langsung ke state messages dan panggil API
-    if current_prompt:
-        st.session_state.messages.append({"role": "user", "content": current_prompt})
-        answer_question(current_prompt, hybrid_retriever, reranker, api_keys)
-        st.rerun()
-
-    # ── Menampilkan Tombol Pilihan Pertanyaan ──
-    # Tombol HANYA muncul jika riwayat kosong DAN tidak ada prompt aktif yang sedang diproses.
-    # Ketika pengguna bertanya pertama kali atau tombol diklik, kondisi ini langsung terpenuhi untuk menyembunyikan chip contoh.
-    if not st.session_state.messages and not current_prompt:
+    # ── 3. render contoh pertanyaan jika belum ada obrolan ──
+    if not st.session_state.messages:
         st.markdown("**👋 Belum tahu mau tanya apa? Coba salah satu ini:**")
         with st.container(key="example_questions"):
             cols = st.columns(2)
@@ -800,11 +702,13 @@ def main():
                     st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("")
 
-    # ── Merender Seluruh Riwayat Obrolan Sesuai Urutan Kronologis ──
-    # Expander "Lihat pasal yang dirujuk" telah dihapus sepenuhnya di sini
+    # ── 4. render riwayat obrolan secara kronologis ──
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            if message["role"] == "assistant" and message.get("context_retrieved"):
+                with st.expander("📄 Lihat pasal yang dirujuk AI", expanded=False):
+                    st.markdown(f"```\n{message['context_retrieved']}\n```")
 
 
 if __name__ == "__main__":
