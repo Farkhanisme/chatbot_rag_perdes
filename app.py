@@ -641,6 +641,7 @@ def local_css():
                 font-size: 0.82rem;
                 color: #7D6608;
                 margin-top: 10px;
+                margin-bottom: 10px;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -785,7 +786,7 @@ def main():
     """, unsafe_allow_html=True)
 
     st.markdown(
-        '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
+        '<div class="disclaimer-box">Jawaban chatbot ini dihasilkan otomatis '
         'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
         'resmi/hukum, mohon konfirmasi ke perangkat Desa Tieng.</div>',
         unsafe_allow_html=True,
