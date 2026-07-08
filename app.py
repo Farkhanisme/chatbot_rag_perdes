@@ -764,6 +764,14 @@ def main():
         </div>
     """, unsafe_allow_html=True)
 
+    # Disclaimer diletakkan paling bawah secara konsisten satu kali saja
+    st.markdown(
+        '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
+        'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
+        'resmi/hukum, mohon konfirmasi ke perangkat Desa Tieng.</div>',
+        unsafe_allow_html=True,
+    )
+
     # ── Logika Menangkap Input Pengguna Sebelum Me-render Tampilan ──
     typed_prompt = st.chat_input("Tulis pertanyaan Anda di sini, mis. \"Apa itu bank sampah?\"")
     queued_prompt = st.session_state.pop("queued_prompt", None)
@@ -796,14 +804,6 @@ def main():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-
-    # Disclaimer diletakkan paling bawah secara konsisten satu kali saja
-    st.markdown(
-        '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
-        'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
-        'resmi/hukum, mohon konfirmasi ke perangkat Desa Tieng.</div>',
-        unsafe_allow_html=True,
-    )
 
 
 if __name__ == "__main__":
