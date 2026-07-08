@@ -784,6 +784,13 @@ def main():
         </div>
     """, unsafe_allow_html=True)
 
+    st.markdown(
+        '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
+        'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
+        'resmi/hukum, mohon konfirmasi ke perangkat Desa Tieng.</div>',
+        unsafe_allow_html=True,
+    )
+
     # ── Input baru: deteksi chat_input atau pemicu tombol contoh ──
     typed_prompt = st.chat_input("Tulis pertanyaan Anda di sini, mis. \"Apa itu bank sampah?\"")
     queued_prompt = st.session_state.pop("queued_prompt", None)
@@ -811,13 +818,6 @@ def main():
 
     if prompt:
         handle_prompt(prompt, hybrid_retriever, reranker, api_keys)
-
-    st.markdown(
-        '<div class="disclaimer-box">ℹ️ Jawaban chatbot ini dihasilkan otomatis '
-        'berdasarkan isi Peraturan Desa dan dapat memuat kekeliruan. Untuk keperluan '
-        'resmi/hukum, mohon konfirmasi ke perangkat Desa Tieng.</div>',
-        unsafe_allow_html=True,
-    )
 
 
 if __name__ == "__main__":
