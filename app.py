@@ -909,7 +909,23 @@ def main():
     # ── Baris tombol atas ──
     with st.container(key="top_actions"):
         if st.button("🆕", help="Mulai percakapan baru", use_container_width=True):
+            # Reset semua state yang terkait riwayat percakapan, bukan cuma
+            # 'messages'. Kalau 'response_cache' (cache jawaban ber-riwayat,
+            # lihat get_cached_response/set_cached_response) tidak ikut
+            # direset, pertanyaan yang sama di chat "baru" bisa saja kena
+            # cache hit dari sesi sebelumnya sehingga terasa seperti "belum
+            # benar-benar bersih". 'queued_prompt' juga dibersihkan supaya
+            # tidak ada pertanyaan contoh tertunda dari sesi lama yang ikut
+            # terkirim di chat baru.
             st.session_state.messages = []
+            st.session_state.pop("response_cache", None)
+            st.session_state.pop("queued_prompt", None)
+            # st.rerun() dipanggil eksplisit supaya seluruh halaman langsung
+            # di-render ulang dari awal dalam kondisi bersih pada rerun
+            # berikutnya, alih-alih mengandalkan sisa eksekusi script pada
+            # run yang sama (yang bisa membuat elemen chat lama tampak
+            # sesaat sebelum benar-benar hilang).
+            st.rerun()
         if st.session_state.messages:
             pdf_bytes = generate_chat_pdf(st.session_state.messages)
             st.download_button(
