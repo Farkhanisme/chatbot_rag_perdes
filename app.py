@@ -766,13 +766,15 @@ def local_css():
     """, unsafe_allow_html=True)
 
 
-def answer_question(prompt: str, hybrid_retriever, reranker, pasal_index: dict, api_keys: list[str]):
+def answer_question(prompt: str, hybrid_retriever, reranker, pasal_index: dict, api_keys: list[str], conv_id: int = 0):
     # Key kontainer dibuat stabil berdasarkan indeks pesan (posisi pesan ini
-    # akan menempati di session_state.messages setelah nanti di-append).
+    # akan menempati di session_state.messages setelah nanti di-append),
+    # DIGABUNG dengan conv_id supaya key ini tidak pernah bentrok dengan
+    # key container dari percakapan sebelumnya (lihat penjelasan di main()).
     # Ini mencegah Streamlit "salah menempatkan" pesan lama ketika elemen
     # sementara seperti spinner muncul/hilang saat rerun.
     assistant_idx = len(st.session_state.messages)
-    with st.container(key=f"msg_container_{assistant_idx}"):
+    with st.container(key=f"msg_container_{conv_id}_{assistant_idx}"):
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             full_response = ""
@@ -864,13 +866,13 @@ def answer_question(prompt: str, hybrid_retriever, reranker, pasal_index: dict, 
     })
 
 
-def handle_prompt(prompt: str, hybrid_retriever, reranker, pasal_index: dict, api_keys: list[str]):
+def handle_prompt(prompt: str, hybrid_retriever, reranker, pasal_index: dict, api_keys: list[str], conv_id: int = 0):
     st.session_state.messages.append({"role": "user", "content": prompt})
     user_idx = len(st.session_state.messages) - 1
-    with st.container(key=f"msg_container_{user_idx}"):
+    with st.container(key=f"msg_container_{conv_id}_{user_idx}"):
         with st.chat_message("user"):
             st.markdown(prompt)
-    answer_question(prompt, hybrid_retriever, reranker, pasal_index, api_keys)
+    answer_question(prompt, hybrid_retriever, reranker, pasal_index, api_keys, conv_id=conv_id)
 
 
 CONTOH_PERTANYAAN = [
@@ -906,6 +908,22 @@ def main():
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
+    # ID unik per "sesi percakapan". Semua key container pesan
+    # (msg_container_...) menyertakan nilai ini. Kalau tombol New Chat cuma
+    # mengosongkan 'messages' tanpa mengubah namespace key, container pesan
+    # di percakapan baru akan memakai key yang PERSIS SAMA dengan container
+    # di percakapan lama (mis. "msg_container_0", "msg_container_1", dst
+    # dimulai dari nol lagi). Streamlit mengidentifikasi container lewat
+    # key ini, dan dalam beberapa kasus (terutama container yang lebih
+    # dalam/indeksnya lebih tinggi, seperti jawaban pertanyaan kedua) sisa
+    # konten lama tidak benar-benar dibuang saat key-nya dipakai ulang.
+    # Dengan menambahkan conversation_id yang selalu naik setiap New Chat,
+    # key container percakapan baru dijamin tidak pernah sama dengan
+    # percakapan sebelumnya.
+    if "conversation_id" not in st.session_state:
+        st.session_state.conversation_id = 0
+    conv_id = st.session_state.conversation_id
+
     # ── Baris tombol atas ──
     with st.container(key="top_actions"):
         if st.button("🆕", help="Mulai percakapan baru", use_container_width=True):
@@ -920,6 +938,10 @@ def main():
             st.session_state.messages = []
             st.session_state.pop("response_cache", None)
             st.session_state.pop("queued_prompt", None)
+            # Naikkan conversation_id supaya SEMUA key container pesan di
+            # percakapan baru ini pasti berbeda dari percakapan sebelumnya
+            # (lihat penjelasan di atas, dekat inisialisasi conversation_id).
+            st.session_state.conversation_id += 1
             # st.rerun() dipanggil eksplisit supaya seluruh halaman langsung
             # di-render ulang dari awal dalam kondisi bersih pada rerun
             # berikutnya, alih-alih mengandalkan sisa eksekusi script pada
@@ -986,16 +1008,18 @@ def main():
 
     # ── Riwayat obrolan (Expander pasal rujukan sudah dihapus dari sini) ──
     # Setiap pesan dibungkus st.container(key=...) dengan key stabil berbasis
-    # indeks, sama seperti pada handle_prompt()/answer_question(), supaya
-    # Streamlit tidak salah menempatkan pesan lama saat elemen sementara
-    # (spinner) pada pesan baru muncul/hilang di rerun berikutnya.
+    # indeks DIGABUNG conv_id, sama seperti pada handle_prompt()/
+    # answer_question(), supaya Streamlit tidak salah menempatkan pesan lama
+    # saat elemen sementara (spinner) pada pesan baru muncul/hilang di rerun
+    # berikutnya, dan supaya key percakapan baru tidak pernah bentrok dengan
+    # key percakapan sebelumnya setelah tombol New Chat diklik.
     for i, message in enumerate(st.session_state.messages):
-        with st.container(key=f"msg_container_{i}"):
+        with st.container(key=f"msg_container_{conv_id}_{i}"):
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
     if prompt:
-        handle_prompt(prompt, hybrid_retriever, reranker, pasal_index, api_keys)
+        handle_prompt(prompt, hybrid_retriever, reranker, pasal_index, api_keys, conv_id=conv_id)
 
 
 if __name__ == "__main__":
