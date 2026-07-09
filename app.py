@@ -407,7 +407,7 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
                     result += w
                     if message_placeholder is not None:
                         message_placeholder.markdown(result + "▌")
-                        time.sleep(0.0005)
+                        time.sleep(0.02)
             if message_placeholder is not None:
                 message_placeholder.markdown(result)
             return result
@@ -613,7 +613,12 @@ rokok atau popok). JANGAN berasumsi warga awam sudah paham istilah tersebut.
 5. Jawaban ringkas namun lengkap, bahasa ramah dan mudah dipahami warga awam. \
 Boleh memakai poin-poin singkat jika perlu menjelaskan lebih dari satu istilah \
 agar mudah dibaca. Selesaikan kalimat terakhir hingga tanda titik.
-6. JANGAN mengarang nomor pasal yang tidak ada dalam konteks."""),
+6. JANGAN mengarang nomor pasal yang tidak ada dalam konteks.
+7. Jika pengguna secara eksplisit meminta "isi pasal", "seluruh isi pasal", \
+"sebutkan semua", atau permintaan serupa, dan KONTEKS memuat LEBIH DARI SATU \
+butir/definisi dari pasal yang sama, SEBUTKAN SEMUA butir tersebut secara \
+berurutan dalam bentuk daftar (poin atau bernomor) — JANGAN hanya menyebutkan \
+salah satu butir saja meskipun butir itu sudah pernah dibahas sebelumnya."""),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{question}")
     ])
