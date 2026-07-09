@@ -334,10 +334,22 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
         def _stream_once() -> str:
             result = ""
             for chunk in chain.stream(payload):
-                result += chunk
-                if message_placeholder is not None:
-                    # Tampilkan progresif dengan kursor berkedip di akhir
-                    message_placeholder.markdown(result + "▌")
+                # PENTING: Gemini tidak stream per-token/huruf seperti OpenAI —
+                # satu "chunk" dari API bisa berisi beberapa kata sekaligus
+                # (kadang satu kalimat penuh). Kalau chunk ini langsung
+                # dirender apa adanya, teks akan terlihat "meloncat" beberapa
+                # kata sekaligus alih-alih mengetik halus.
+                #
+                # Solusinya: pecah setiap chunk jadi potongan kata kecil,
+                # lalu tampilkan satu per satu dengan jeda singkat, supaya
+                # animasi ketik terasa mulus dan konsisten berapa pun ukuran
+                # chunk asli dari Gemini.
+                words = re.findall(r'\S+\s*', chunk)
+                for w in words:
+                    result += w
+                    if message_placeholder is not None:
+                        message_placeholder.markdown(result + "▌")
+                        time.sleep(0.02)
             if message_placeholder is not None:
                 message_placeholder.markdown(result)
             return result

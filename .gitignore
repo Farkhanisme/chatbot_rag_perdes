@@ -2,7 +2,7 @@
 venv/
 
 # Folder database vector (FAISS)
-faiss/
+faiss_index/
 
 # File konfigurasi sensitif (API Key, dll)
 .env
@@ -10,17 +10,41 @@ faiss/
 # Cache Python
 __pycache__/
 *.py[cod]
+.devcontainer/
+.streamlit/
 
+.gitignore
+chart_metrik_utama_v3.png
+chart_metrik_utama.png
+chart_semua_metrik_v2.png
+chart_semua_metrik_v3.png
+chart_semua_metrik.png
 cek_model.py
 chunks_cache.txt
 diagnose_retrieval.py
 download_model.py
 evaluate_ragas_asli.py
 generate_bukti_bab4.py
+generate_bukti_bab4_lengkap.py
 generate_log.jsonl
 generate_ragas_dataset_4.py
 generate_ragas_dataset.py
 hit_rate_analysis.py
+jawaban_llm.txt
+konteks_final_ke_llm.txt
+promp_final_ke_llm.txt
+ragas_answers_v3.csv
 ragas_answers.csv
 ragas_dataset_perdes_tieng.xlsx
+ragas_eval_asli_per_baris_v3.csv
 ragas_eval_asli_per_baris.csv
+tabel_dedup_kandidat.xlsx
+tabel_embedding_chunk.xlsx
+tsbel_fusi_hybrid_rrf.xlsx
+tabel_hasil_chunking.xlsx
+tabel_rerank_sebelum_urut.xlsx
+tabel_rerank_setelah_urut.xlsx
+tabel_retrieval_bm25.xlsx
+tabel_retrieval_faiss
+tabel_tokenisasi_pertanyaan.xlsx
+tabel_vektor_pertanyaan.xlsx
