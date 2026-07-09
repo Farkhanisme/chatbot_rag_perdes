@@ -817,7 +817,14 @@ def answer_question(prompt: str, hybrid_retriever, reranker, pasal_index: dict, 
                 payload = {
                     "context": context_string,
                     "chat_history": langchain_history,
-                    "question": prompt
+                    # Pakai retrieval_query (versi mandiri/tidak ambigu, hasil
+                    # condense_question), BUKAN prompt asli. Kalau prompt asli
+                    # yang ambigu (mis. "sebutkan isi pasalnya") yang dikirim,
+                    # model bisa salah menafsirkan cakupannya hanya sebatas
+                    # topik terakhir di riwayat (mis. bank sampah saja),
+                    # padahal KONTEKS yang disiapkan sudah berisi seluruh isi
+                    # pasal yang dimaksud.
+                    "question": retrieval_query
                 }
                 start_idx = st.session_state.get("active_key_idx", 0)
 
