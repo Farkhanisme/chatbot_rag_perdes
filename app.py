@@ -80,6 +80,24 @@ def split_large_pasal(pasal_chunk: str, max_len: int = 1200) -> list[str]:
     return [f"{header}\n{seg}" for seg in segments]
 
 
+def build_pasal_index(chunks: list[str]) -> dict[str, list[str]]:
+    """Mengelompokkan seluruh chunk berdasarkan nomor pasalnya.
+
+    Pasal yang panjang (mis. Pasal 1 yang berisi puluhan definisi) dipecah
+    oleh split_large_pasal() menjadi banyak chunk kecil terpisah — satu
+    chunk per butir definisi. Index ini memungkinkan semua potongan pasal
+    yang sama dikumpulkan kembali, supaya permintaan "sebutkan isi pasal
+    secara lengkap" tidak hanya mengandalkan hasil similarity search yang
+    bisa saja cuma menemukan satu potongan kecil dari pasal tersebut.
+    """
+    index: dict[str, list[str]] = {}
+    for chunk in chunks:
+        match = re.search(r'###\s+Pasal\s+(\d+)', chunk)
+        if match:
+            index.setdefault(match.group(1), []).append(chunk)
+    return index
+
+
 def build_chunks_from_text(raw_text: str, pasal_split_threshold: int = 1200) -> list[str]:
     parts = re.split(r'\n(?=###\s+Pasal)', raw_text)
     chunks = []
@@ -117,7 +135,7 @@ def get_resources():
 
     if not os.path.exists("faiss_index"):
         if not os.path.exists(file_path):
-            return None, None, None
+            return None, None, None, None
         with open(file_path, "r", encoding="utf-8") as f:
             raw_text = f.read()
         chunks = build_chunks_from_text(raw_text, pasal_split_threshold=RAG_CONFIG["pasal_split_threshold"])
@@ -148,7 +166,9 @@ def get_resources():
         weights=[0.6, 0.4]
     )
 
-    return embeddings, vector_db, hybrid_retriever
+    pasal_index = build_pasal_index(chunks)
+
+    return embeddings, vector_db, hybrid_retriever, pasal_index
 
 
 @st.cache_resource
@@ -177,6 +197,44 @@ def _smart_truncate(context_str: str, max_chars: int) -> str:
     if cutoff > 0:
         return context_str[:cutoff]
     return context_str[:max_chars]
+
+
+_FULL_PASAL_TRIGGER = re.compile(r'\b(isi|sebutkan|seluruh|semua|lengkap|rincian)\b', re.IGNORECASE)
+_PASAL_NUMBER = re.compile(r'\bpasal\s+(\d+)\b', re.IGNORECASE)
+
+
+def get_full_pasal_context(question: str, pasal_index: dict[str, list[str]]) -> str | None:
+    """Kalau pertanyaan (setelah di-condense) secara eksplisit menyebut nomor
+    pasal DAN memakai kata kunci "minta isi lengkap" (mis. "sebutkan isi
+    pasal 1", "seluruh isi pasal 12"), gabungkan SEMUA potongan pasal
+    tersebut dari pasal_index menjadi satu konteks utuh — bukan hanya
+    mengandalkan top-k hasil hybrid retrieval yang bisa saja cuma
+    menangkap satu butir kecil (mis. satu definisi) dari pasal yang panjang.
+    Kembalikan None kalau tidak relevan, supaya alur retrieval biasa tetap
+    dipakai sebagai fallback.
+    """
+    pasal_match = _PASAL_NUMBER.search(question)
+    if not pasal_match or not _FULL_PASAL_TRIGGER.search(question):
+        return None
+
+    pieces = pasal_index.get(pasal_match.group(1))
+    if not pieces:
+        return None
+
+    header, bodies = None, []
+    for piece in pieces:
+        lines = piece.split("\n")
+        i = 0
+        while i < len(lines) and not lines[i].lstrip().startswith("* "):
+            i += 1
+        piece_header = "\n".join(lines[:i]).strip()
+        piece_body = "\n".join(lines[i:]).strip()
+        if header is None:
+            header = piece_header
+        if piece_body and piece_body not in bodies:
+            bodies.append(piece_body)
+
+    return f"{header}\n" + "\n".join(bodies)
 
 
 def retrieve_and_rerank(question: str, hybrid_retriever, reranker: CrossEncoder) -> tuple[list, str]:
@@ -349,7 +407,7 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
                     result += w
                     if message_placeholder is not None:
                         message_placeholder.markdown(result + "▌")
-                        time.sleep(0.001)
+                        time.sleep(0.0005)
             if message_placeholder is not None:
                 message_placeholder.markdown(result)
             return result
@@ -703,7 +761,7 @@ def local_css():
     """, unsafe_allow_html=True)
 
 
-def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]):
+def answer_question(prompt: str, hybrid_retriever, reranker, pasal_index: dict, api_keys: list[str]):
     # Key kontainer dibuat stabil berdasarkan indeks pesan (posisi pesan ini
     # akan menempati di session_state.messages setelah nanti di-append).
     # Ini mencegah Streamlit "salah menempatkan" pesan lama ketika elemen
@@ -730,7 +788,16 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
                     if has_history else prompt
                 )
 
-                _, context_string = retrieve_and_rerank(retrieval_query, hybrid_retriever, reranker)
+                # Kalau pengguna secara eksplisit minta isi pasal secara
+                # lengkap (mis. "sebutkan isi pasal 1"), pakai konteks
+                # gabungan seluruh potongan pasal tersebut. Kalau tidak
+                # relevan (None), jatuh ke alur hybrid retrieval + rerank
+                # seperti biasa.
+                full_pasal_context = get_full_pasal_context(retrieval_query, pasal_index)
+                if full_pasal_context is not None:
+                    context_string = _smart_truncate(full_pasal_context, RAG_CONFIG["max_context_chars"] * 2)
+                else:
+                    _, context_string = retrieve_and_rerank(retrieval_query, hybrid_retriever, reranker)
 
                 cache_key = get_cache_key(prompt, context_string, has_history)
                 cached = get_cached_response(cache_key, has_history)
@@ -785,13 +852,13 @@ def answer_question(prompt: str, hybrid_retriever, reranker, api_keys: list[str]
     })
 
 
-def handle_prompt(prompt: str, hybrid_retriever, reranker, api_keys: list[str]):
+def handle_prompt(prompt: str, hybrid_retriever, reranker, pasal_index: dict, api_keys: list[str]):
     st.session_state.messages.append({"role": "user", "content": prompt})
     user_idx = len(st.session_state.messages) - 1
     with st.container(key=f"msg_container_{user_idx}"):
         with st.chat_message("user"):
             st.markdown(prompt)
-    answer_question(prompt, hybrid_retriever, reranker, api_keys)
+    answer_question(prompt, hybrid_retriever, reranker, pasal_index, api_keys)
 
 
 CONTOH_PERTANYAAN = [
@@ -817,7 +884,7 @@ def main():
 
     init_usage_tracker(len(api_keys))
 
-    embeddings, vector_db, hybrid_retriever = get_resources()
+    embeddings, vector_db, hybrid_retriever, pasal_index = get_resources()
     if vector_db is None:
         st.error("Layanan belum siap: dokumen peraturan desa belum tersedia. Silakan hubungi admin.")
         return
@@ -900,7 +967,7 @@ def main():
                 st.markdown(message["content"])
 
     if prompt:
-        handle_prompt(prompt, hybrid_retriever, reranker, api_keys)
+        handle_prompt(prompt, hybrid_retriever, reranker, pasal_index, api_keys)
 
 
 if __name__ == "__main__":
