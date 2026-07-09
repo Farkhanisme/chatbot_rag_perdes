@@ -349,7 +349,7 @@ def call_model_tier(prompt_template, payload: dict, api_keys: list[str],
                     result += w
                     if message_placeholder is not None:
                         message_placeholder.markdown(result + "▌")
-                        time.sleep(0.005)
+                        time.sleep(0.001)
             if message_placeholder is not None:
                 message_placeholder.markdown(result)
             return result
