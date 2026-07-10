@@ -6,6 +6,7 @@ import hashlib
 import pandas as pd
 from datetime import datetime
 from io import BytesIO
+from streamlit.components.v1 import html as _components_html
 
 # --- PDF GENERATION ---
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
@@ -939,15 +940,36 @@ def main():
             st.session_state.pop("response_cache", None)
             st.session_state.pop("queued_prompt", None)
             # Naikkan conversation_id supaya SEMUA key container pesan di
-            # percakapan baru ini pasti berbeda dari percakapan sebelumnya
-            # (lihat penjelasan di atas, dekat inisialisasi conversation_id).
+            # percakapan baru ini pasti berbeda dari percakapan sebelumnya.
             st.session_state.conversation_id += 1
-            # st.rerun() dipanggil eksplisit supaya seluruh halaman langsung
-            # di-render ulang dari awal dalam kondisi bersih pada rerun
-            # berikutnya, alih-alih mengandalkan sisa eksekusi script pada
-            # run yang sama (yang bisa membuat elemen chat lama tampak
-            # sesaat sebelum benar-benar hilang).
-            st.rerun()
+
+            # CATATAN PENTING (fix lanjutan):
+            # st.rerun() saja TERNYATA TIDAK CUKUP untuk kasus ini. Ini bukan
+            # salah logika di skrip kita, tapi keterbatasan yang sudah
+            # dikonfirmasi oleh tim Streamlit sendiri: st.empty() / container
+            # yang dipakai untuk streaming jawaban (message_placeholder di
+            # answer_question(), dipanggil .markdown() berkali-kali) tidak
+            # selalu benar-benar menghapus elemen lama dari DOM saat script
+            # rerun di WEBSOCKET SESSION YANG SAMA — sisa elemen bisa
+            # "nyangkut" sesaat, dan ini makin kelihatan pada jawaban yang
+            # posisinya lebih dalam (persis seperti jawaban KEDUA yang
+            # dilaporkan tidak hilang). Mengganti key container (conversation_id)
+            # saja tidak menjamin bersih karena masalahnya ada di sisi
+            # penerapan diff/delta frontend Streamlit, bukan di key matching.
+            #
+            # Solusi yang benar-benar andal: paksa BROWSER melakukan hard
+            # reload penuh (bukan sekadar rerun skrip Python di sesi yang
+            # sama). Ini menjamin seluruh DOM lama dibuang total oleh
+            # browser sendiri, bukan diserahkan ke mekanisme diffing
+            # Streamlit yang punya bug ini. `components.html` dijalankan di
+            # iframe terpisah, sehingga kita perlu reload `window.parent`
+            # (halaman utama), bukan iframe-nya sendiri.
+            _components_html(
+                "<script>window.parent.location.reload();</script>",
+                height=0,
+                width=0,
+            )
+            st.stop()
         if st.session_state.messages:
             pdf_bytes = generate_chat_pdf(st.session_state.messages)
             st.download_button(
