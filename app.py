@@ -1020,6 +1020,20 @@ def main():
 
     if prompt:
         handle_prompt(prompt, hybrid_retriever, reranker, pasal_index, api_keys, conv_id=conv_id)
+        # PENTING: paksa satu rerun tambahan setelah pesan baru selesai
+        # diproses. Tanpa ini, jawaban yang baru saja "diketik" secara live
+        # lewat st.empty() (message_placeholder) di answer_question() akan
+        # tetap berupa elemen st.empty() yang belum pernah "disolidkan" jadi
+        # elemen render biasa (st.markdown() polos lewat loop riwayat di
+        # atas) — sampai ada pertanyaan berikutnya yang memicu render ulang.
+        # Kalau pengguna klik "New Chat" SEBELUM sempat bertanya lagi,
+        # elemen st.empty() sisa dari jawaban terakhir itu bisa tidak ikut
+        # terhapus bersih saat halaman di-reset (conv_id berubah), sehingga
+        # cuma jawaban paling terakhir yang terlihat "tidak mau hilang".
+        # Dengan st.rerun() di sini, setiap jawaban baru langsung digambar
+        # ulang lewat jalur render biasa pada rerun berikutnya, sehingga
+        # tidak ada placeholder st.empty() yang tertinggal menggantung.
+        st.rerun()
 
 
 if __name__ == "__main__":
